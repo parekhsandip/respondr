@@ -1,0 +1,439 @@
+{% extends "base.html" %}
+
+{% block title %}Settings - Respondr{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+        <p class="text-gray-600 mt-1">Configure your email connection and application preferences</p>
+    </div>
+
+    <div class="space-y-6">
+        <!-- Email Configuration -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Email Configuration</h2>
+                <p class="text-sm text-gray-600 mt-1">Configure your IMAP settings to fetch emails</p>
+            </div>
+
+            <div class="px-6 py-6">
+                <form id="email-config-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- IMAP Server -->
+                        <div>
+                            <label for="imap_server" class="block text-sm font-medium text-gray-700">IMAP Server</label>
+                            <input
+                                type="text"
+                                id="imap_server"
+                                name="imap_server"
+                                placeholder="imap.gmail.com"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Your email provider's IMAP server address</p>
+                        </div>
+
+                        <!-- IMAP Port -->
+                        <div>
+                            <label for="imap_port" class="block text-sm font-medium text-gray-700">IMAP Port</label>
+                            <input
+                                type="number"
+                                id="imap_port"
+                                name="imap_port"
+                                placeholder="993"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Usually 993 for SSL or 143 for non-SSL</p>
+                        </div>
+
+                        <!-- Username -->
+                        <div>
+                            <label for="imap_username" class="block text-sm font-medium text-gray-700">Username/Email</label>
+                            <input
+                                type="email"
+                                id="imap_username"
+                                name="imap_username"
+                                placeholder="your-email@gmail.com"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                        </div>
+
+                        <!-- Password -->
+                        <div>
+                            <label for="imap_password" class="block text-sm font-medium text-gray-700">Password</label>
+                            <input
+                                type="password"
+                                id="imap_password"
+                                name="imap_password"
+                                placeholder="Your email password or app password"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Use app-specific password for Gmail/Outlook</p>
+                        </div>
+
+                        <!-- SSL/TLS -->
+                        <div class="flex items-center">
+                            <input
+                                id="imap_use_ssl"
+                                name="imap_use_ssl"
+                                type="checkbox"
+                                checked
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="imap_use_ssl" class="ml-2 block text-sm text-gray-900">
+                                Use SSL/TLS encryption
+                            </label>
+                        </div>
+
+                        <!-- Folder -->
+                        <div>
+                            <label for="imap_folder" class="block text-sm font-medium text-gray-700">IMAP Folder</label>
+                            <input
+                                type="text"
+                                id="imap_folder"
+                                name="imap_folder"
+                                placeholder="INBOX"
+                                value="INBOX"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Email folder to monitor (usually INBOX)</p>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="flex items-center space-x-4">
+                        <button
+                            type="button"
+                            hx-post="{{ url_for('test_email_connection') }}"
+                            hx-include="#email-config-form"
+                            hx-swap="none"
+                            hx-on:htmx:after-request="handleConnectionTest(event)"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors htmx-indicator-toggle">
+                            <svg class="w-4 h-4 mr-2 htmx-indicator animate-spin hidden" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                            <span class="htmx-indicator hidden">Testing...</span>
+                            <span class="htmx-indicator-opposite">Test Connection</span>
+                        </button>
+
+                        <button
+                            type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            Save Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Sync Settings -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">Sync Settings</h2>
+                <p class="text-sm text-gray-600 mt-1">Configure how often emails are fetched</p>
+            </div>
+
+            <div class="px-6 py-6">
+                <form id="sync-settings-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Fetch Interval -->
+                        <div>
+                            <label for="fetch_interval" class="block text-sm font-medium text-gray-700">Fetch Interval (minutes)</label>
+                            <input
+                                type="number"
+                                id="fetch_interval"
+                                name="fetch_interval"
+                                value="5"
+                                min="1"
+                                max="60"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">How often to check for new emails (1-60 minutes)</p>
+                        </div>
+
+                        <!-- Max Emails per Sync -->
+                        <div>
+                            <label for="max_emails_per_sync" class="block text-sm font-medium text-gray-700">Max Emails per Sync</label>
+                            <input
+                                type="number"
+                                id="max_emails_per_sync"
+                                name="max_emails_per_sync"
+                                value="50"
+                                min="1"
+                                max="200"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Maximum number of emails to process in one sync</p>
+                        </div>
+
+                        <!-- Auto Sync -->
+                        <div class="flex items-center">
+                            <input
+                                id="auto_sync_enabled"
+                                name="auto_sync_enabled"
+                                type="checkbox"
+                                checked
+                                class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+                            <label for="auto_sync_enabled" class="ml-2 block text-sm text-gray-900">
+                                Enable automatic sync
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            Save Sync Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- File Upload Settings -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">File Settings</h2>
+                <p class="text-sm text-gray-600 mt-1">Configure attachment handling</p>
+            </div>
+
+            <div class="px-6 py-6">
+                <form id="file-settings-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Max Attachment Size -->
+                        <div>
+                            <label for="max_attachment_size" class="block text-sm font-medium text-gray-700">Max Attachment Size (MB)</label>
+                            <input
+                                type="number"
+                                id="max_attachment_size"
+                                name="max_attachment_size"
+                                value="10"
+                                min="1"
+                                max="100"
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Maximum size for email attachments</p>
+                        </div>
+
+                        <!-- Storage Path -->
+                        <div>
+                            <label for="attachment_storage_path" class="block text-sm font-medium text-gray-700">Storage Path</label>
+                            <input
+                                type="text"
+                                id="attachment_storage_path"
+                                name="attachment_storage_path"
+                                value="storage/attachments"
+                                readonly
+                                class="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 bg-gray-50 text-gray-500 sm:text-sm">
+                            <p class="mt-1 text-xs text-gray-500">Directory where attachments are stored</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <button
+                            type="submit"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
+                            Save File Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- System Status -->
+        <div class="bg-white shadow rounded-lg">
+            <div class="px-6 py-4 border-b border-gray-200">
+                <h2 class="text-lg font-medium text-gray-900">System Status</h2>
+                <p class="text-sm text-gray-600 mt-1">Current system information and sync status</p>
+            </div>
+
+            <div class="px-6 py-6">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Connection Status -->
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-medium text-gray-900">Connection</h3>
+                        <p id="connection-status" class="text-sm text-gray-500">Not tested</p>
+                    </div>
+
+                    <!-- Last Sync -->
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-medium text-gray-900">Last Sync</h3>
+                        <p id="last-sync-status" class="text-sm text-gray-500">Never</p>
+                    </div>
+
+                    <!-- Total Tickets -->
+                    <div class="text-center">
+                        <div class="inline-flex items-center justify-center w-12 h-12 bg-gray-100 rounded-full mb-3">
+                            <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H2"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-sm font-medium text-gray-900">Total Tickets</h3>
+                        <p id="total-tickets" class="text-sm text-gray-500">0</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Setup Guide -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg">
+            <div class="px-6 py-4">
+                <h3 class="text-lg font-medium text-blue-900">Quick Setup Guide</h3>
+                <div class="mt-4 text-sm text-blue-800">
+                    <ol class="list-decimal list-inside space-y-2">
+                        <li>Configure your IMAP settings above with your email provider details</li>
+                        <li>Click "Test Connection" to verify your settings work</li>
+                        <li>Save your configuration</li>
+                        <li>Go back to the inbox and click "Sync Now" to fetch your first emails</li>
+                        <li>Automatic sync will run every 5 minutes (or your configured interval)</li>
+                    </ol>
+                </div>
+
+                <div class="mt-4">
+                    <h4 class="font-medium text-blue-900">Common Email Providers:</h4>
+                    <div class="mt-2 grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <strong>Gmail:</strong><br>
+                            Server: imap.gmail.com<br>
+                            Port: 993 (SSL)<br>
+                            <em>Use app password, not account password</em>
+                        </div>
+                        <div>
+                            <strong>Outlook/Hotmail:</strong><br>
+                            Server: outlook.office365.com<br>
+                            Port: 993 (SSL)<br>
+                            <em>May require app password</em>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Handle connection test response
+    function handleConnectionTest(event) {
+        const xhr = event.detail.xhr;
+        const response = JSON.parse(xhr.responseText);
+
+        const statusElement = document.getElementById('connection-status');
+
+        if (response.success) {
+            statusElement.textContent = 'Connected ✓';
+            statusElement.className = 'text-sm text-green-600';
+            showToast('Connection successful!', 'success');
+        } else {
+            statusElement.textContent = 'Failed ✗';
+            statusElement.className = 'text-sm text-red-600';
+            showToast('Connection failed: ' + response.message, 'error');
+        }
+    }
+
+    // Load settings from database
+    async function loadSettings() {
+        try {
+            const response = await fetch('/api/settings');
+            const data = await response.json();
+
+            if (data.success) {
+                // Load email settings
+                const emailSettings = data.settings.email || {};
+                document.getElementById('imap_server').value = emailSettings.IMAP_SERVER || '';
+                document.getElementById('imap_port').value = emailSettings.IMAP_PORT || '';
+                document.getElementById('imap_username').value = emailSettings.IMAP_USERNAME || '';
+                document.getElementById('imap_password').value = emailSettings.IMAP_PASSWORD || '';
+                document.getElementById('imap_use_ssl').checked = (emailSettings.IMAP_USE_SSL || 'true') === 'true';
+                document.getElementById('imap_folder').value = emailSettings.IMAP_FOLDER || 'INBOX';
+
+                // Load sync settings
+                const syncSettings = data.settings.sync || {};
+                document.getElementById('fetch_interval').value = Math.floor((syncSettings.FETCH_INTERVAL || 300) / 60);
+                document.getElementById('max_emails_per_sync').value = syncSettings.MAX_EMAILS_PER_SYNC || '';
+                document.getElementById('auto_sync_enabled').checked = (syncSettings.SCHEDULER_ENABLED || 'true') === 'true';
+
+                // Load file settings
+                const fileSettings = data.settings.files || {};
+                document.getElementById('max_attachment_size').value = Math.floor((fileSettings.ATTACHMENT_MAX_SIZE || 10485760) / 1048576);
+                document.getElementById('attachment_storage_path').value = fileSettings.ATTACHMENT_STORAGE_PATH || '';
+            }
+        } catch (error) {
+            console.error('Failed to load settings:', error);
+            showToast('Failed to load settings', 'error');
+        }
+    }
+
+    // Save settings to database
+    async function saveSettings(category, formData) {
+        try {
+            const response = await fetch(`/api/settings/${category}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(formData)
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                showToast(data.message, 'success');
+                return true;
+            } else {
+                showToast('Failed to save: ' + data.message, 'error');
+                return false;
+            }
+        } catch (error) {
+            console.error('Failed to save settings:', error);
+            showToast('Failed to save settings', 'error');
+            return false;
+        }
+    }
+
+    // Form submissions
+    document.getElementById('email-config-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = {
+            IMAP_SERVER: document.getElementById('imap_server').value,
+            IMAP_PORT: document.getElementById('imap_port').value,
+            IMAP_USERNAME: document.getElementById('imap_username').value,
+            IMAP_PASSWORD: document.getElementById('imap_password').value,
+            IMAP_USE_SSL: document.getElementById('imap_use_ssl').checked.toString(),
+            IMAP_FOLDER: document.getElementById('imap_folder').value
+        };
+
+        await saveSettings('email', formData);
+    });
+
+    document.getElementById('sync-settings-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = {
+            FETCH_INTERVAL: (parseInt(document.getElementById('fetch_interval').value) * 60).toString(),
+            MAX_EMAILS_PER_SYNC: document.getElementById('max_emails_per_sync').value,
+            SCHEDULER_ENABLED: document.getElementById('auto_sync_enabled').checked.toString()
+        };
+
+        await saveSettings('sync', formData);
+    });
+
+    document.getElementById('file-settings-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+
+        const formData = {
+            ATTACHMENT_MAX_SIZE: (parseInt(document.getElementById('max_attachment_size').value) * 1048576).toString()
+        };
+
+        await saveSettings('files', formData);
+    });
+
+    // Load settings on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        loadSettings();
+    });
+</script>
+{% endblock %}

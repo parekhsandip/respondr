@@ -1,0 +1,33 @@
+# Flask and web framework dependencies
+Flask
+Flask-SQLAlchemy
+Flask-APScheduler
+
+# Database
+SQLAlchemy
+
+# Email handling
+email-validator
+
+# Security
+Werkzeug
+
+# Environment variables
+python-dotenv
+
+# Utilities
+python-dateutil
+pytz
+
+# Development and testing
+pytest
+pytest-flask
+
+# HTML sanitization (for email content)
+bleach
+
+# Email parsing enhancements
+chardet
+
+# File handling
+python-magic

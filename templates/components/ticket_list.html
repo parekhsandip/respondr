@@ -1,0 +1,230 @@
+<!-- Ticket List Component -->
+{% if tickets.items %}
+    {% for ticket in tickets.items %}
+        <div class="p-6 hover:bg-gray-50 cursor-pointer transition-colors group"
+             onclick="openTicketModal({{ ticket.id }})">
+            <div class="flex items-start space-x-4">
+                <!-- Status Indicator -->
+                <div class="flex-shrink-0 mt-1">
+                    {% if ticket.status == 'new' %}
+                        <span class="inline-flex items-center justify-center w-3 h-3 bg-blue-500 rounded-full">
+                            <span class="sr-only">New ticket</span>
+                        </span>
+                    {% elif ticket.status == 'read' %}
+                        <span class="inline-flex items-center justify-center w-3 h-3 bg-green-500 rounded-full">
+                            <span class="sr-only">Read ticket</span>
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center justify-center w-3 h-3 bg-gray-400 rounded-full">
+                            <span class="sr-only">Archived ticket</span>
+                        </span>
+                    {% endif %}
+                </div>
+
+                <!-- Ticket Content -->
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1 min-w-0">
+                            <!-- Sender -->
+                            <div class="flex items-center space-x-2 mb-1">
+                                <p class="text-sm font-medium text-gray-900 truncate">
+                                    {{ ticket.sender_name or ticket.sender_email }}
+                                </p>
+                                {% if ticket.sender_name %}
+                                    <p class="text-sm text-gray-500 truncate">
+                                        &lt;{{ ticket.sender_email }}&gt;
+                                    </p>
+                                {% endif %}
+                            </div>
+
+                            <!-- Subject -->
+                            <h3 class="text-base font-semibold text-gray-900 group-hover:text-blue-600 transition-colors mb-2 truncate">
+                                {{ ticket.subject }}
+                            </h3>
+
+                            <!-- Content Preview -->
+                            <p class="text-sm text-gray-600 line-clamp-2 mb-2">
+                                {{ ticket.get_content_preview(150) }}
+                            </p>
+
+                            <!-- Metadata -->
+                            <div class="flex items-center space-x-4 text-xs text-gray-500">
+                                <span class="flex items-center">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                    {{ ticket.get_relative_time() }}
+                                </span>
+
+                                {% if ticket.has_attachments() %}
+                                    <span class="flex items-center">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                        </svg>
+                                        {{ ticket.get_attachment_count() }} attachment{{ 's' if ticket.get_attachment_count() != 1 else '' }}
+                                    </span>
+                                {% endif %}
+
+                                <span class="flex items-center">
+                                    <span class="w-2 h-2 rounded-full mr-1
+                                        {% if ticket.priority <= 2 %}bg-red-400{% elif ticket.priority >= 4 %}bg-green-400{% else %}bg-yellow-400{% endif %}">
+                                    </span>
+                                    Priority {{ ticket.priority }}
+                                </span>
+
+                                <span class="bg-gray-100 text-gray-700 px-2 py-1 rounded-full text-xs">
+                                    {{ ticket.ticket_number }}
+                                </span>
+                            </div>
+                        </div>
+
+                        <!-- Actions -->
+                        <div class="flex-shrink-0 ml-4">
+                            <div class="flex items-center space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                {% if ticket.status == 'new' %}
+                                    <button
+                                        onclick="event.stopPropagation(); updateTicketStatus({{ ticket.id }}, 'read')"
+                                        class="p-1 text-gray-400 hover:text-green-600 transition-colors"
+                                        title="Mark as read">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                                        </svg>
+                                    </button>
+                                {% elif ticket.status == 'read' %}
+                                    <button
+                                        onclick="event.stopPropagation(); updateTicketStatus({{ ticket.id }}, 'unread')"
+                                        class="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                                        title="Mark as unread">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 1.05c2.59.36 5.22.36 7.81 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                        </svg>
+                                    </button>
+                                {% endif %}
+
+                                {% if ticket.status != 'archived' %}
+                                    <button
+                                        onclick="event.stopPropagation(); archiveTicket({{ ticket.id }})"
+                                        class="p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                                        title="Archive">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
+                                        </svg>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+
+    <!-- Pagination -->
+    {% if tickets.pages > 1 %}
+        <div class="bg-white px-4 py-3 border-t border-gray-200 sm:px-6">
+            <div class="flex items-center justify-between">
+                <div class="flex-1 flex justify-between sm:hidden">
+                    {% if tickets.has_prev %}
+                        <a href="{{ url_for('index', page=tickets.prev_num, status=status_filter, search=search_query) }}"
+                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Previous
+                        </a>
+                    {% endif %}
+                    {% if tickets.has_next %}
+                        <a href="{{ url_for('index', page=tickets.next_num, status=status_filter, search=search_query) }}"
+                           class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                            Next
+                        </a>
+                    {% endif %}
+                </div>
+                <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                    <div>
+                        <p class="text-sm text-gray-700">
+                            Showing
+                            <span class="font-medium">{{ ((tickets.page - 1) * tickets.per_page) + 1 }}</span>
+                            to
+                            <span class="font-medium">{{ min(tickets.page * tickets.per_page, tickets.total) }}</span>
+                            of
+                            <span class="font-medium">{{ tickets.total }}</span>
+                            results
+                        </p>
+                    </div>
+                    <div>
+                        <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                            {% if tickets.has_prev %}
+                                <a href="{{ url_for('index', page=tickets.prev_num, status=status_filter, search=search_query) }}"
+                                   class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Previous</span>
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            {% endif %}
+
+                            {% for page_num in tickets.iter_pages() %}
+                                {% if page_num %}
+                                    {% if page_num != tickets.page %}
+                                        <a href="{{ url_for('index', page=page_num, status=status_filter, search=search_query) }}"
+                                           class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50">
+                                            {{ page_num }}
+                                        </a>
+                                    {% else %}
+                                        <span aria-current="page"
+                                              class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-blue-50 text-sm font-medium text-blue-600">
+                                            {{ page_num }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="relative inline-flex items-center px-4 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                                        ...
+                                    </span>
+                                {% endif %}
+                            {% endfor %}
+
+                            {% if tickets.has_next %}
+                                <a href="{{ url_for('index', page=tickets.next_num, status=status_filter, search=search_query) }}"
+                                   class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                                    <span class="sr-only">Next</span>
+                                    <svg class="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                                    </svg>
+                                </a>
+                            {% endif %}
+                        </nav>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+
+{% else %}
+    <!-- Empty State -->
+    <div class="text-center py-12">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-4.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H2"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No tickets found</h3>
+        <p class="mt-1 text-sm text-gray-500">
+            {% if search_query %}
+                No tickets match your search criteria.
+            {% else %}
+                No tickets have been created yet. Check your email configuration and sync settings.
+            {% endif %}
+        </p>
+        {% if not search_query %}
+            <div class="mt-6">
+                <button
+                    hx-post="{{ url_for('manual_sync') }}"
+                    hx-trigger="click"
+                    hx-swap="none"
+                    hx-on:htmx:after-request="handleSyncResponse(event)"
+                    class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <svg class="-ml-1 mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                    Sync Emails Now
+                </button>
+            </div>
+        {% endif %}
+    </div>
+{% endif %}
