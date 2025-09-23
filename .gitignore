@@ -79,5 +79,4 @@ instance/
 migrate_*.py
 CLAUDE.md
 app_context.md
-README.md
 setup.py
