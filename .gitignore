@@ -80,3 +80,4 @@ migrate_*.py
 CLAUDE.md
 app_context.md
 setup.py
+project_req.md
