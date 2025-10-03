@@ -3,325 +3,807 @@
 {% block title %}{{ ticket.subject }} - Respondr{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- Header -->
-    <div class="mb-6">
-        <div class="flex items-center justify-between">
-            <div class="flex items-center space-x-4">
-                <a href="{{ url_for('index') }}"
-                   class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors">
-                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
-                    </svg>
-                    Back to Inbox
-                </a>
-                <span class="text-gray-300">|</span>
-                <span class="text-sm text-gray-500">{{ ticket.ticket_number }}</span>
+<!-- Mobile Tab Navigation -->
+<div class="lg:hidden bg-white border-b border-gray-200 sticky top-0 z-10">
+    <div class="flex">
+        <button onclick="showMobilePanel('content')" id="content-tab" class="flex-1 py-3 px-4 text-center text-sm font-medium text-blue-600 border-b-2 border-blue-600 bg-gray-50">
+            Ticket
+        </button>
+        <button onclick="showMobilePanel('properties')" id="properties-tab" class="flex-1 py-3 px-4 text-center text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent">
+            Properties
+        </button>
+        <button onclick="showMobilePanel('info')" id="info-tab" class="flex-1 py-3 px-4 text-center text-sm font-medium text-gray-600 hover:text-gray-800 border-b-2 border-transparent">
+            Info
+        </button>
+    </div>
+</div>
+
+<!-- Responsive 3-column layout -->
+<div class="h-full flex flex-col lg:flex-row bg-gray-50" id="ticket-view-container">
+
+    <!-- Left Column: Properties Panel - Mobile Collapsible -->
+    <div id="properties-panel" class="w-full lg:w-80 xl:w-96 bg-white shadow-sm border-b lg:border-r lg:border-b-0 border-gray-100 flex-col overflow-hidden order-2 lg:order-1 hidden lg:flex">
+
+        <!-- Enhanced Properties Header -->
+        <div class="px-4 sm:px-6 py-4 sm:py-5 border-b border-gray-100 bg-gradient-to-r from-gray-50 to-white lg:block">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Properties</h3>
+                <div class="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-1 rounded-md">#{{ ticket.ticket_number }}</div>
+            </div>
+        </div>
+
+        <!-- Enhanced Properties Content -->
+        <div class="flex-1 p-4 sm:p-6 overflow-y-auto custom-scrollbar space-y-6 sm:space-y-8 max-h-[50vh] lg:max-h-full">
+
+            <!-- Requester Section -->
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Requester</h4>
+                <div class="flex items-center space-x-3">
+                    {% if ticket.organization and ticket.organization.name %}
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-sm font-medium">
+                            {{ ticket.organization.name[0].upper() }}
+                        </div>
+                    {% else %}
+                        <div class="flex-shrink-0 h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-medium">
+                            {{ ticket.sender_name[0].upper() if ticket.sender_name else 'U' }}
+                        </div>
+                    {% endif %}
+                    <div class="flex-1 min-w-0">
+                        <div class="text-sm font-medium text-gray-900 truncate">
+                            {{ ticket.sender_name or 'Unknown User' }}
+                        </div>
+                        <div class="text-sm text-gray-500 truncate">{{ ticket.sender_email }}</div>
+                        {% if ticket.organization %}
+                            <div class="text-xs text-blue-600 truncate">{{ ticket.organization.name }}</div>
+                        {% endif %}
+                    </div>
+                </div>
             </div>
 
-            <!-- Actions -->
-            <div class="flex items-center space-x-3">
-                {% if ticket.status == 'new' %}
-                    <button
-                        hx-post="{{ url_for('mark_ticket_read', ticket_id=ticket.id) }}"
-                        hx-swap="none"
-                        hx-on:htmx:after-request="location.reload()"
-                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-                        </svg>
-                        Mark as Read
-                    </button>
-                {% elif ticket.status == 'read' %}
-                    <button
-                        hx-post="{{ url_for('mark_ticket_unread', ticket_id=ticket.id) }}"
-                        hx-swap="none"
-                        hx-on:htmx:after-request="location.reload()"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 1.05c2.59.36 5.22.36 7.81 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                        </svg>
-                        Mark as Unread
-                    </button>
-                {% endif %}
+            <!-- Assignment Section -->
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Assignment</h4>
 
-                {% if ticket.status != 'archived' %}
-                    <button
-                        hx-post="{{ url_for('archive_ticket', ticket_id=ticket.id) }}"
-                        hx-swap="none"
-                        hx-on:htmx:after-request="window.location.href='{{ url_for('index') }}'"
-                        hx-confirm="Are you sure you want to archive this ticket?"
-                        class="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"></path>
-                        </svg>
-                        Archive
-                    </button>
+                <!-- Assignee -->
+                <div class="mb-4">
+                    <label class="text-xs text-gray-600 block mb-2">Assignee</label>
+                    <div class="relative">
+                        <select hx-post="{{ url_for('assign_ticket', ticket_id=ticket.id) }}"
+                                hx-swap="none"
+                                hx-on:htmx:after-request="showToast('Assignment updated', 'success'); document.body.dispatchEvent(new CustomEvent('refreshTimeline'))"
+                                name="assignee_id"
+                                class="w-full pl-3 pr-10 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                            <option value="">Unassigned</option>
+                            {% for agent in agents %}
+                                <option value="{{ agent.id }}" {{ 'selected' if ticket.assignee_id == agent.id }}>
+                                    {{ agent.full_name }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Current Assignee Display -->
+                {% if ticket.assignee %}
+                    <div class="flex items-center space-x-2 text-sm">
+                        <div class="flex-shrink-0 h-6 w-6">
+                            {% if ticket.assignee.avatar_url %}
+                                <img class="h-6 w-6 rounded-full" src="{{ ticket.assignee.avatar_url }}" alt="{{ ticket.assignee.full_name }}">
+                            {% else %}
+                                <div class="h-6 w-6 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-medium">
+                                    {{ ticket.assignee.first_name[0] }}{{ ticket.assignee.last_name[0] }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <span class="text-gray-700">{{ ticket.assignee.full_name }}</span>
+                        <span class="text-gray-400">•</span>
+                        <span class="text-gray-500">{{ ticket.assignee.role.title() }}</span>
+                    </div>
                 {% endif %}
             </div>
+
+            <!-- Followers Section -->
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-medium text-gray-700">Followers</h4>
+                    <button class="text-xs text-blue-600 hover:text-blue-800" onclick="addFollower()">
+                        + Add
+                    </button>
+                </div>
+                <div id="followers-list" class="space-y-2">
+                    {% if ticket.followers %}
+                        {% for follower in ticket.followers %}
+                            <div class="flex items-center justify-between py-2 px-3 bg-gray-50 rounded-lg" data-agent-id="{{ follower.agent.id }}">
+                                <div class="flex items-center space-x-2">
+                                    <div class="flex-shrink-0 h-5 w-5">
+                                        {% if follower.agent.avatar_url %}
+                                            <img class="h-5 w-5 rounded-full" src="{{ follower.agent.avatar_url }}" alt="{{ follower.agent.full_name }}">
+                                        {% else %}
+                                            <div class="h-5 w-5 rounded-full bg-gradient-to-br from-green-500 to-teal-600 flex items-center justify-center text-white text-xs font-medium">
+                                                {{ follower.agent.first_name[0] }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <span class="text-sm text-gray-700">{{ follower.agent.full_name }}</span>
+                                </div>
+                                <button hx-delete="{{ url_for('remove_follower', ticket_id=ticket.id, agent_id=follower.agent.id) }}"
+                                        hx-swap="none"
+                                        hx-on:htmx:after-request="refreshFollowers()"
+                                        class="text-gray-400 hover:text-red-500 transition-colors">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-sm text-gray-500 text-center py-4">No followers</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Tags Section -->
+            <div>
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-medium text-gray-700">Tags</h4>
+                    <button class="text-xs text-blue-600 hover:text-blue-800" onclick="addTag()">
+                        + Add
+                    </button>
+                </div>
+                <div id="tags-container" class="flex flex-wrap gap-2">
+                    {% if ticket.tags %}
+                        {% for tag in ticket.tags %}
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" data-tag-id="{{ tag.id }}"
+                                  style="background-color: {{ tag.color }}20; color: {{ tag.color }}; border: 1px solid {{ tag.color }}40;">
+                                {{ tag.name }}
+                                <button hx-delete="{{ url_for('remove_tag_from_ticket', ticket_id=ticket.id, tag_id=tag.id) }}"
+                                        hx-swap="none"
+                                        hx-on:htmx:after-request="refreshTags()"
+                                        class="ml-1.5 inline-flex items-center justify-center w-4 h-4 rounded-full hover:bg-gray-200 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                    </svg>
+                                </button>
+                            </span>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-sm text-gray-500">No tags</div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Attachments Section -->
+            {% if ticket.attachments and ticket.attachments.count() > 0 %}
+            <div>
+                <h4 class="text-sm font-medium text-gray-700 mb-3">Attachments</h4>
+                <div class="space-y-2">
+                    {% for attachment in ticket.attachments %}
+                        <a href="{{ url_for('download_attachment', attachment_id=attachment.id) }}"
+                           class="flex items-center p-2 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors group">
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-900 truncate">{{ attachment.filename }}</p>
+                                <p class="text-xs text-gray-500">
+                                    {% if attachment.size %}
+                                        {{ (attachment.size / 1024 / 1024)|round(2) }} MB
+                                    {% endif %}
+                                    • {{ attachment.created_at.strftime('%m/%d/%Y') }}
+                                </p>
+                            </div>
+                            <svg class="w-4 h-4 text-gray-400 group-hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                            </svg>
+                        </a>
+                    {% endfor %}
+                </div>
+                <div class="mt-2 text-xs text-gray-500">
+                    {{ ticket.attachments.count() }} attachment{{ 's' if ticket.attachments.count() != 1 else '' }}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Type & Priority Section -->
+            <div class="grid grid-cols-2 gap-4">
+                <!-- Type -->
+                <div>
+                    <label class="text-xs text-gray-600 block mb-2">Type</label>
+                    <select hx-post="{{ url_for('update_ticket_type_assignment', ticket_id=ticket.id) }}"
+                            hx-swap="none"
+                            hx-on:htmx:after-request="showToast('Type updated', 'success'); document.body.dispatchEvent(new CustomEvent('refreshTimeline'))"
+                            name="type_id"
+                            class="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        <option value="">Select type</option>
+                        {% for type in ticket_types %}
+                            <option value="{{ type.id }}" {{ 'selected' if ticket.type_id == type.id }}>
+                                {{ type.name }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Priority -->
+                <div>
+                    <label class="text-xs text-gray-600 block mb-2">Priority</label>
+                    <select hx-post="{{ url_for('update_ticket_priority', ticket_id=ticket.id) }}"
+                            hx-swap="none"
+                            hx-on:htmx:after-request="showToast('Priority updated', 'success'); document.body.dispatchEvent(new CustomEvent('refreshTimeline'))"
+                            name="priority"
+                            class="w-full pl-3 pr-8 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                        {% for i in range(1, 6) %}
+                            <option value="{{ i }}" {{ 'selected' if ticket.priority == i }}>
+                                {% if i == 1 %}Urgent
+                                {% elif i == 2 %}High
+                                {% elif i == 3 %}Normal
+                                {% elif i == 4 %}Low
+                                {% else %}Lowest{% endif %}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+
+            <!-- Topic -->
+            <div>
+                <label class="text-xs text-gray-600 block mb-2">Topic</label>
+                <input type="text"
+                       value="{{ ticket.topic or '' }}"
+                       hx-post="{{ url_for('update_ticket_topic', ticket_id=ticket.id) }}"
+                       hx-trigger="blur"
+                       hx-swap="none"
+                       hx-on:htmx:after-request="showToast('Topic updated', 'success'); document.body.dispatchEvent(new CustomEvent('refreshTimeline'))"
+                       name="topic"
+                       placeholder="Enter topic..."
+                       class="w-full pl-3 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+            </div>
+
+            <!-- Relationships Section -->
+            <div id="relationships-section">
+                <div class="flex items-center justify-between mb-3">
+                    <h4 class="text-sm font-medium text-gray-700">Related Tickets</h4>
+                    <div class="relative">
+                        <button onclick="toggleRelationshipMenu()"
+                                class="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                            </svg>
+                            Add
+                        </button>
+                        <!-- Dropdown Menu -->
+                        <div id="relationship-menu" class="hidden absolute right-0 mt-1 w-48 bg-white rounded-md shadow-lg border border-gray-200 z-50">
+                            <div class="py-1">
+                                <button onclick="openMergeModal()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                    </svg>
+                                    Merge with...
+                                </button>
+                                <button onclick="openSplitModal()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path>
+                                    </svg>
+                                    Split ticket...
+                                </button>
+                                <button onclick="openLinkModal()" class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                    <svg class="w-4 h-4 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path>
+                                    </svg>
+                                    Link to ticket...
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Relationships List -->
+                <div id="relationships-list" class="space-y-2"
+                     hx-get="{{ url_for('get_ticket_relationships', ticket_id=ticket.id) }}"
+                     hx-trigger="load, refreshRelationships from:body"
+                     hx-swap="innerHTML">
+                    <div class="text-sm text-gray-500 italic">Loading relationships...</div>
+                </div>
+            </div>
+
         </div>
     </div>
 
-    <!-- Ticket Content -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-        <!-- Ticket Header -->
-        <div class="px-6 py-4 border-b border-gray-200">
-            <div class="flex items-start justify-between">
-                <div class="flex-1 min-w-0">
-                    <!-- Status Badge -->
-                    <div class="mb-2">
-                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                            {% if ticket.status == 'new' %}bg-blue-100 text-blue-800{% elif ticket.status == 'read' %}bg-green-100 text-green-800{% else %}bg-gray-100 text-gray-800{% endif %}">
-                            {{ ticket.status.title() }}
-                        </span>
+    <!-- Center Column: Content & Communication - Main on Mobile -->
+    <div id="content-panel" class="flex-1 flex flex-col bg-white min-w-0 order-1 lg:order-2">
+
+        <!-- Enhanced Header -->
+        <div class="bg-white border-b border-gray-100 shadow-sm">
+            <div class="px-4 sm:px-6 py-3 sm:py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <a href="{{ url_for('index') }}"
+                           class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200">
+                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                            Back to Tickets
+                        </a>
+                        <div class="h-4 w-px bg-gray-300"></div>
+                        <span class="text-sm font-medium text-gray-900">{{ ticket.ticket_number }}</span>
                     </div>
 
-                    <!-- Subject -->
-                    <h1 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
-                        {{ ticket.subject }}
-                        {% if ticket.has_attachments() %}
-                            <svg class="w-5 h-5 ml-2 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
-                            </svg>
-                        {% endif %}
-                    </h1>
-
-                    <!-- Sender Info -->
-                    <div class="flex items-center space-x-4 text-sm text-gray-600 mb-4">
-                        <div class="flex items-center">
-                            <div class="flex-shrink-0 w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center">
-                                <span class="text-sm font-medium text-gray-700">
-                                    {{ (ticket.sender_name or ticket.sender_email).split()[0][0].upper() }}
-                                </span>
+                    <!-- Status Controls and Actions -->
+                    <div class="flex items-center space-x-4">
+                        <div class="relative">
+                            {% set statuses = [
+                                ('new', 'New', 'bg-slate-100 text-slate-700'),
+                                ('open', 'Open', 'bg-emerald-100 text-emerald-700'),
+                                ('pending', 'Pending', 'bg-amber-100 text-amber-700'),
+                                ('on-hold', 'On Hold', 'bg-orange-100 text-orange-700'),
+                                ('solved', 'Solved', 'bg-purple-100 text-purple-700'),
+                                ('closed', 'Closed', 'bg-gray-100 text-gray-700')
+                            ] %}
+                            <div class="flex items-center space-x-3">
+                                <span class="text-sm text-gray-500">Status:</span>
+                                <select hx-post="{{ url_for('update_ticket_status', ticket_id=ticket.id) }}"
+                                        hx-swap="none"
+                                        hx-on:htmx:after-request="showToast('Status updated', 'success'); document.body.dispatchEvent(new CustomEvent('refreshTimeline')); setTimeout(() => location.reload(), 500)"
+                                        name="status"
+                                        class="px-3 py-1.5 text-sm font-medium rounded-md border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                                    {% for status_value, status_label, status_class in statuses %}
+                                        <option value="{{ status_value }}" {{ 'selected' if ticket.status == status_value }}>
+                                            {{ status_label }}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <!-- Current Status Badge -->
+                                {% for status_value, status_label, status_class in statuses %}
+                                    {% if ticket.status == status_value %}
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full {{ status_class }}">
+                                            {{ status_label }}
+                                        </span>
+                                    {% endif %}
+                                {% endfor %}
                             </div>
-                            <div class="ml-3">
-                                <p class="font-medium text-gray-900">{{ ticket.sender_name or ticket.sender_email }}</p>
-                                {% if ticket.sender_name %}
-                                    <p class="text-gray-500">&lt;{{ ticket.sender_email }}&gt;</p>
+                        </div>
+
+                        <!-- Delete Button -->
+                        <button onclick="deleteTicket({{ ticket.id }})"
+                                class="inline-flex items-center px-3 py-1.5 text-sm font-medium text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 hover:border-red-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition-colors duration-200"
+                                title="Delete ticket">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path>
+                            </svg>
+                            Delete
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Enhanced Subject -->
+            <div class="px-4 sm:px-6 pb-3 sm:pb-4">
+                <input type="text"
+                       value="{{ ticket.subject }}"
+                       hx-post="{{ url_for('update_ticket_subject', ticket_id=ticket.id) }}"
+                       hx-trigger="blur"
+                       hx-swap="none"
+                       hx-on:htmx:after-request="showToast('Subject updated', 'success')"
+                       name="subject"
+                       class="w-full text-2xl font-bold text-gray-900 bg-transparent border-none focus:outline-none focus:ring-2 focus:ring-blue-500 rounded-lg px-3 py-2 -ml-3 transition-all duration-200 hover:bg-gray-50">
+            </div>
+        </div>
+
+        <!-- Scrollable Content Area -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+            <div class="px-4 sm:px-6 py-4 sm:py-6">
+
+                <!-- Original Ticket Content -->
+                <div class="mb-8">
+                    <div class="flex items-start space-x-4">
+                        <div class="flex-shrink-0">
+                            {% if ticket.organization and ticket.organization.name %}
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-gray-400 to-gray-600 flex items-center justify-center text-white text-sm font-medium">
+                                    {{ ticket.organization.name[0].upper() }}
+                                </div>
+                            {% else %}
+                                <div class="h-10 w-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white text-sm font-medium">
+                                    {{ ticket.sender_name[0].upper() if ticket.sender_name else 'U' }}
+                                </div>
+                            {% endif %}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                                <span class="font-medium text-gray-900">{{ ticket.sender_name or 'Unknown User' }}</span>
+                                <span>•</span>
+                                <span>{{ ticket.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                                <span>•</span>
+                                <span>to {{ ticket.recipient_email }}</span>
+                            </div>
+                            <div class="prose max-w-none">
+                                {% if ticket.content_html %}
+                                    {{ ticket.content_html|safe }}
+                                {% else %}
+                                    <p class="whitespace-pre-wrap">{{ ticket.content_text }}</p>
                                 {% endif %}
                             </div>
+
+                            <!-- Attachments -->
+                            {% if attachments %}
+                                <div class="mt-4 pt-4 border-t border-gray-100">
+                                    <h5 class="text-sm font-medium text-gray-700 mb-2">Attachments ({{ attachments|length }})</h5>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                        {% for attachment in attachments %}
+                                            <a href="{{ url_for('download_attachment', attachment_id=attachment.id) }}"
+                                               class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                                <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                                </svg>
+                                                <div class="flex-1 min-w-0">
+                                                    <p class="text-sm font-medium text-gray-900 truncate">{{ attachment.filename }}</p>
+                                                    <p class="text-xs text-gray-500">
+                                                        {% if attachment.size %}
+                                                            {{ (attachment.size / 1024 / 1024)|round(2) }} MB
+                                                        {% endif %}
+                                                    </p>
+                                                </div>
+                                            </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endif %}
                         </div>
                     </div>
-
-                    <!-- Metadata -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-                        <div>
-                            <dt class="font-medium text-gray-500">Received</dt>
-                            <dd class="mt-1 text-gray-900">{{ ticket.received_at.strftime('%B %d, %Y at %I:%M %p') }}</dd>
-                        </div>
-                        <div>
-                            <dt class="font-medium text-gray-500">To</dt>
-                            <dd class="mt-1 text-gray-900">{{ ticket.recipient_email }}</dd>
-                        </div>
-                        <div>
-                            <dt class="font-medium text-gray-500">Priority</dt>
-                            <dd class="mt-1">
-                                <span class="inline-flex items-center">
-                                    <span class="w-2 h-2 rounded-full mr-1
-                                        {% if ticket.priority <= 2 %}bg-red-400{% elif ticket.priority >= 4 %}bg-green-400{% else %}bg-yellow-400{% endif %}">
-                                    </span>
-                                    {{ ticket.priority }}
-                                </span>
-                            </dd>
-                        </div>
-                    </div>
-
-                    {% if ticket.get_cc_emails() %}
-                        <div class="mt-4">
-                            <dt class="font-medium text-gray-500 text-sm">CC</dt>
-                            <dd class="mt-1 text-sm text-gray-900">
-                                {{ ', '.join(ticket.get_cc_emails()) }}
-                            </dd>
-                        </div>
-                    {% endif %}
                 </div>
-            </div>
-        </div>
 
-        <!-- Ticket Content -->
-        <div class="px-6 py-6">
-            <div class="prose max-w-none">
-                {% if ticket.content_html %}
-                    <!-- HTML Content -->
-                    <div class="email-content">
-                        {{ ticket.content_html | safe }}
-                    </div>
-                {% elif ticket.content_text %}
-                    <!-- Plain Text Content -->
-                    <div class="whitespace-pre-wrap text-gray-900">{{ ticket.content_text }}</div>
-                {% else %}
-                    <p class="text-gray-500 italic">No content available</p>
-                {% endif %}
-            </div>
-        </div>
+                <!-- Replies Section -->
+                <div id="replies-section">
+                    {% if replies %}
+                        {% for reply in replies %}
+                            <div class="mb-8 border-b border-gray-100 pb-6 last:border-b-0
+                                        {% if not reply.is_public %}bg-amber-50 border border-amber-200 rounded-lg p-4 relative{% endif %}">
 
-        <!-- Attachments -->
-        {% set regular_attachments = [] %}
-        {% for attachment in attachments %}
-            {% if not attachment.is_embedded %}
-                {% set _ = regular_attachments.append(attachment) %}
-            {% endif %}
-        {% endfor %}
-        {% if regular_attachments %}
-            <div class="px-6 py-4 border-t border-gray-200">
-                <h3 class="text-lg font-medium text-gray-900 mb-4">
-                    Attachments ({{ regular_attachments|length }})
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {% for attachment in regular_attachments %}
-                        <div class="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors">
-                            <div class="flex items-start space-x-3">
-                                <!-- File Icon -->
-                                <div class="flex-shrink-0">
-                                    {% if attachment.is_image() %}
-                                        <svg class="w-8 h-8 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                                <!-- Internal Note Visual Indicator -->
+                                {% if not reply.is_public %}
+                                    <div class="absolute top-0 left-0 w-1 h-full bg-amber-400 rounded-l-lg"></div>
+                                    <div class="flex items-center space-x-2 text-amber-700 text-xs font-medium mb-3 ml-1">
+                                        <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"></path>
                                         </svg>
-                                    {% elif attachment.is_document() %}
-                                        <svg class="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                    {% else %}
-                                        <svg class="w-8 h-8 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 2a1 1 0 000 2h6a1 1 0 100-2H9z"></path>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                        </svg>
-                                    {% endif %}
-                                </div>
+                                        <span>INTERNAL NOTE - Only visible to agents</span>
+                                    </div>
+                                {% endif %}
 
-                                <!-- File Info -->
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium text-gray-900 truncate">{{ attachment.filename }}</p>
-                                    <p class="text-sm text-gray-500">{{ attachment.get_file_size_human() }}</p>
-                                    {% if attachment.content_type %}
-                                        <p class="text-xs text-gray-400">{{ attachment.content_type }}</p>
-                                    {% endif %}
-                                </div>
+                                <div class="flex items-start space-x-4">
+                                    <div class="flex-shrink-0">
+                                        {% if reply.agent and reply.agent.avatar_url %}
+                                            <img class="h-10 w-10 rounded-full {% if not reply.is_public %}ring-2 ring-amber-300{% endif %}" src="{{ reply.agent.avatar_url }}" alt="{{ reply.agent.full_name }}">
+                                        {% else %}
+                                            <div class="h-10 w-10 rounded-full flex items-center justify-center text-white text-sm font-medium
+                                                        {% if reply.is_public %}bg-gradient-to-br from-blue-500 to-purple-600{% else %}bg-gradient-to-br from-amber-500 to-orange-600 ring-2 ring-amber-300{% endif %}">
+                                                {% if reply.agent %}
+                                                    {{ reply.agent.first_name[0] }}{{ reply.agent.last_name[0] }}
+                                                {% else %}
+                                                    A
+                                                {% endif %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center space-x-2 text-sm mb-2 {% if reply.is_public %}text-gray-500{% else %}text-amber-700{% endif %}">
+                                            <span class="font-medium {% if reply.is_public %}text-gray-900{% else %}text-amber-900{% endif %}">
+                                                {% if reply.agent %}
+                                                    {{ reply.agent.full_name }}
+                                                {% else %}
+                                                    Agent
+                                                {% endif %}
+                                            </span>
+                                            <span>•</span>
+                                            <span>{{ reply.created_at.strftime('%b %d, %Y at %I:%M %p') }}</span>
+                                            <span>•</span>
+                                            {% if reply.is_public %}
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
+                                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                                    </svg>
+                                                    Public Reply
+                                                </span>
+                                            {% else %}
+                                                <span class="inline-flex items-center px-2 py-1 text-xs font-medium bg-amber-100 text-amber-800 rounded-full">
+                                                    <svg class="w-3 h-3 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"></path>
+                                                    </svg>
+                                                    Internal Note
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="prose max-w-none {% if not reply.is_public %}prose-amber{% endif %}">
+                                            {% if reply.content_html %}
+                                                {{ reply.content_html|safe }}
+                                            {% else %}
+                                                <p class="whitespace-pre-wrap {% if not reply.is_public %}text-amber-900{% endif %}">{{ reply.content }}</p>
+                                            {% endif %}
+                                        </div>
 
-                                <!-- Download Button -->
-                                <div class="flex-shrink-0">
-                                    <a href="{{ url_for('download_attachment', attachment_id=attachment.id) }}"
-                                       class="inline-flex items-center p-2 border border-transparent rounded-md text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                                       title="Download {{ attachment.filename }}">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-                                        </svg>
-                                    </a>
+                                        <!-- Reply Attachments -->
+                                        {% if reply.attachments and reply.attachments.count() > 0 %}
+                                            <div class="mt-4 pt-4 border-t border-gray-100">
+                                                <h5 class="text-sm font-medium text-gray-700 mb-2">Attachments ({{ reply.attachments.count() }})</h5>
+                                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                                    {% for attachment in reply.attachments %}
+                                                        <a href="{{ url_for('download_reply_attachment', attachment_id=attachment.id) }}"
+                                                           class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                                                            <svg class="w-5 h-5 text-gray-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                                            </svg>
+                                                            <div class="flex-1 min-w-0">
+                                                                <p class="text-sm font-medium text-gray-900 truncate">{{ attachment.filename }}</p>
+                                                                <p class="text-xs text-gray-500">
+                                                                    {% if attachment.size %}
+                                                                        {{ (attachment.size / 1024 / 1024)|round(2) }} MB
+                                                                    {% endif %}
+                                                                </p>
+                                                            </div>
+                                                        </a>
+                                                    {% endfor %}
+                                                </div>
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            </div>
-        {% endif %}
-
-        <!-- Metadata Section (Collapsible) -->
-        <div class="border-t border-gray-200">
-            <button
-                onclick="toggleMetadata()"
-                class="w-full px-6 py-4 text-left text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:bg-gray-50 transition-colors">
-                <div class="flex items-center justify-between">
-                    <span>Technical Details</span>
-                    <svg id="metadata-chevron" class="w-5 h-5 transform transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
-                    </svg>
-                </div>
-            </button>
-
-            <div id="metadata-content" class="hidden px-6 pb-4">
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                    <div>
-                        <dt class="font-medium text-gray-500">Message ID</dt>
-                        <dd class="mt-1 text-gray-900 font-mono text-xs break-all">{{ ticket.source_id }}</dd>
-                    </div>
-                    <div>
-                        <dt class="font-medium text-gray-500">Created</dt>
-                        <dd class="mt-1 text-gray-900">{{ ticket.created_at.strftime('%B %d, %Y at %I:%M %p') }}</dd>
-                    </div>
-                    {% if ticket.updated_at != ticket.created_at %}
-                        <div>
-                            <dt class="font-medium text-gray-500">Last Updated</dt>
-                            <dd class="mt-1 text-gray-900">{{ ticket.updated_at.strftime('%B %d, %Y at %I:%M %p') }}</dd>
+                        {% endfor %}
+                    {% else %}
+                        <div class="text-center py-8 text-gray-500">
+                            <p>No replies yet</p>
                         </div>
                     {% endif %}
-                    <div>
-                        <dt class="font-medium text-gray-500">Source</dt>
-                        <dd class="mt-1 text-gray-900">{{ ticket.source.title() }}</dd>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Fixed Reply Section -->
+        <div class="border-t border-gray-200 bg-white p-4 sm:p-6">
+            <form id="reply-form" hx-post="/api/ticket/{{ ticket.id }}/replies"
+                  hx-swap="none"
+                  hx-on:htmx:after-request="handleReplySubmit()">
+
+                <!-- Reply Type Toggle -->
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center space-x-3">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="reply_type" value="public" checked
+                                   class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Public reply</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="reply_type" value="internal"
+                                   class="form-radio text-blue-600 focus:ring-blue-500">
+                            <span class="ml-2 text-sm text-gray-700">Internal note</span>
+                        </label>
+                    </div>
+
+                    <div class="flex items-center space-x-2 text-sm text-gray-500">
+                        <span>Ctrl+Enter to send</span>
                     </div>
                 </div>
 
-                {% if ticket.get_raw_headers() %}
-                    <div class="mt-6">
-                        <dt class="font-medium text-gray-500 mb-2">Email Headers</dt>
-                        <dd class="bg-gray-50 p-3 rounded text-xs font-mono overflow-x-auto">
-                            {% for key, value in ticket.get_raw_headers().items() %}
-                                <div class="mb-1">
-                                    <span class="text-gray-600">{{ key }}:</span>
-                                    <span class="text-gray-900">{{ value }}</span>
-                                </div>
-                            {% endfor %}
-                        </dd>
+                <!-- Reply Editor -->
+                <div class="mb-4" id="reply-editor-container">
+                    <!-- WYSIWYG Editor will be initialized here by JavaScript -->
+                    <textarea name="content"
+                              id="reply-content"
+                              rows="6"
+                              placeholder="Write your reply..."
+                              class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+                              required></textarea>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <button type="button"
+                                class="inline-flex items-center text-sm text-gray-500 hover:text-gray-700">
+                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                            </svg>
+                            Attach file
+                        </button>
                     </div>
-                {% endif %}
+
+                    <div class="flex items-center space-x-2">
+                        <button type="button"
+                                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                            Save as draft
+                        </button>
+                        <button type="submit"
+                                class="px-4 py-2 bg-blue-600 border border-transparent rounded-md font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 text-sm">
+                            Send reply
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Right Column: Information & Timeline - Hidden on Mobile -->
+    <div id="info-panel" class="w-full lg:w-80 xl:w-96 bg-gray-50 border-t lg:border-l lg:border-t-0 border-gray-200 flex-col overflow-hidden order-3 hidden lg:flex">
+
+        <!-- Header -->
+        <div class="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 bg-white">
+            <h3 class="text-base sm:text-lg font-medium text-gray-900">Information</h3>
+        </div>
+
+        <!-- Scrollable Info -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar">
+
+            <!-- Customer Details -->
+            <div class="px-6 py-6 bg-white border-b border-gray-200">
+                <h4 class="text-sm font-medium text-gray-700 mb-4">Customer Details</h4>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Email:</span>
+                        <span class="text-sm text-gray-900">{{ ticket.sender_email }}</span>
+                    </div>
+                    {% if ticket.language %}
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Language:</span>
+                            <span class="text-sm text-gray-900">{{ ticket.language.upper() }}</span>
+                        </div>
+                    {% endif %}
+                    {% if ticket.country %}
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Country:</span>
+                            <span class="text-sm text-gray-900">{{ ticket.country.upper() }}</span>
+                        </div>
+                    {% endif %}
+                    {% if ticket.organization %}
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Organization:</span>
+                            <span class="text-sm text-gray-900">{{ ticket.organization.name }}</span>
+                        </div>
+                    {% endif %}
+                    <div class="flex justify-between">
+                        <span class="text-sm text-gray-500">Created:</span>
+                        <span class="text-sm text-gray-900">{{ ticket.created_at.strftime('%m/%d/%Y %I:%M %p') }}</span>
+                    </div>
+                    {% if ticket.updated_at and ticket.updated_at != ticket.created_at %}
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-500">Updated:</span>
+                            <span class="text-sm text-gray-900">{{ ticket.updated_at.strftime('%m/%d/%Y %I:%M %p') }}</span>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
+
+            <!-- Notes Section -->
+            <div class="px-6 py-6 bg-white border-b border-gray-200">
+                <h4 class="text-sm font-medium text-gray-700 mb-4">Agent Notes</h4>
+                <div class="mb-4">
+                    <textarea hx-post="{{ url_for('update_ticket_notes', ticket_id=ticket.id) }}"
+                              hx-trigger="blur"
+                              hx-swap="none"
+                              hx-on:htmx:after-request="showToast('Notes updated', 'success'); document.body.dispatchEvent(new CustomEvent('refreshTimeline'))"
+                              name="notes"
+                              rows="4"
+                              placeholder="Add internal notes..."
+                              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm resize-none">{{ ticket.notes or '' }}</textarea>
+                </div>
+                <div class="text-xs text-gray-500">
+                    Internal notes are only visible to agents
+                </div>
+            </div>
+
+            <!-- Activity Timeline -->
+            <div class="px-6 py-6">
+                <h4 class="text-sm font-medium text-gray-700 mb-4">Activity Timeline</h4>
+
+                <div class="flow-root">
+                    <div id="activity-timeline"
+                         hx-get="/api/ticket/{{ ticket.id }}/activities"
+                         hx-trigger="load, refreshTimeline from:body"
+                         hx-swap="innerHTML">
+                        <!-- Loading state -->
+                        <div class="flex items-center justify-center py-8">
+                            <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                            <span class="ml-2 text-sm text-gray-500">Loading timeline...</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
         </div>
     </div>
 </div>
 
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/ticket-view.js') }}"></script>
 <script>
-    function toggleMetadata() {
-        const content = document.getElementById('metadata-content');
-        const chevron = document.getElementById('metadata-chevron');
+// Initialize ticket view with current ticket ID
+initializeTicketView({{ ticket.id }});
 
-        if (content.classList.contains('hidden')) {
-            content.classList.remove('hidden');
-            chevron.classList.add('rotate-180');
+// Delete ticket function
+async function deleteTicket(ticketId) {
+    if (!confirm('Are you sure you want to delete this ticket? This action can be undone.')) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/ticket/${ticketId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        });
+
+        if (response.ok) {
+            showToast('Ticket deleted successfully', 'success');
+            // Redirect to tickets list after a short delay
+            setTimeout(() => {
+                window.location.href = '/';
+            }, 1000);
         } else {
-            content.classList.add('hidden');
-            chevron.classList.remove('rotate-180');
+            const errorData = await response.json();
+            showToast(errorData.message || 'Failed to delete ticket', 'error');
         }
+    } catch (error) {
+        console.error('Error deleting ticket:', error);
+        showToast('Error deleting ticket', 'error');
     }
+}
+
+// Mobile panel switching functionality
+function showMobilePanel(panel) {
+    // Only apply on mobile screens
+    if (window.innerWidth >= 1024) return;
+
+    // Hide all panels
+    document.getElementById('properties-panel').classList.add('hidden');
+    document.getElementById('content-panel').classList.add('hidden');
+    document.getElementById('info-panel').classList.add('hidden');
+
+    // Remove active state from all tabs
+    document.getElementById('properties-tab').classList.remove('text-blue-600', 'border-blue-600', 'bg-gray-50');
+    document.getElementById('properties-tab').classList.add('text-gray-600', 'border-transparent');
+    document.getElementById('content-tab').classList.remove('text-blue-600', 'border-blue-600', 'bg-gray-50');
+    document.getElementById('content-tab').classList.add('text-gray-600', 'border-transparent');
+    document.getElementById('info-tab').classList.remove('text-blue-600', 'border-blue-600', 'bg-gray-50');
+    document.getElementById('info-tab').classList.add('text-gray-600', 'border-transparent');
+
+    // Show selected panel and activate tab
+    if (panel === 'properties') {
+        document.getElementById('properties-panel').classList.remove('hidden');
+        document.getElementById('properties-panel').classList.add('flex');
+        document.getElementById('properties-tab').classList.add('text-blue-600', 'border-blue-600', 'bg-gray-50');
+        document.getElementById('properties-tab').classList.remove('text-gray-600', 'border-transparent');
+    } else if (panel === 'content') {
+        document.getElementById('content-panel').classList.remove('hidden');
+        document.getElementById('content-panel').classList.add('flex');
+        document.getElementById('content-tab').classList.add('text-blue-600', 'border-blue-600', 'bg-gray-50');
+        document.getElementById('content-tab').classList.remove('text-gray-600', 'border-transparent');
+    } else if (panel === 'info') {
+        document.getElementById('info-panel').classList.remove('hidden');
+        document.getElementById('info-panel').classList.add('flex');
+        document.getElementById('info-tab').classList.add('text-blue-600', 'border-blue-600', 'bg-gray-50');
+        document.getElementById('info-tab').classList.remove('text-gray-600', 'border-transparent');
+    }
+}
+
+// Handle window resize to show all panels on desktop
+window.addEventListener('resize', function() {
+    if (window.innerWidth >= 1024) {
+        // Show all panels on desktop
+        document.getElementById('properties-panel').classList.remove('hidden');
+        document.getElementById('properties-panel').classList.add('flex');
+        document.getElementById('content-panel').classList.remove('hidden');
+        document.getElementById('content-panel').classList.add('flex');
+        document.getElementById('info-panel').classList.remove('hidden');
+        document.getElementById('info-panel').classList.add('flex');
+    } else {
+        // On mobile, ensure only content panel is visible by default
+        showMobilePanel('content');
+    }
+});
 </script>
+{% endblock %}
 
-<style>
-    /* Email content styling */
-    .email-content {
-        max-width: none;
-    }
-
-    .email-content img {
-        max-width: 100%;
-        height: auto;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
-        margin: 8px 0;
-    }
-
-    .email-content table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-
-    .email-content td,
-    .email-content th {
-        border: 1px solid #e5e7eb;
-        padding: 8px;
-        text-align: left;
-    }
-
-    .email-content blockquote {
-        border-left: 4px solid #e5e7eb;
-        margin: 16px 0;
-        padding-left: 16px;
-        color: #6b7280;
-    }
-
-    /* Line clamp utility */
-    .line-clamp-2 {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
-    }
-</style>
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/ticket-view.css') }}">
+{% endblock %}
 {% endblock %}

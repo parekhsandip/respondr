@@ -11,226 +11,62 @@
     <!-- HTMX -->
     <script src="https://unpkg.com/htmx.org@1.9.6"></script>
 
-    <!-- Heroicons for icons -->
-    <link rel="stylesheet" href="https://heroicons.com/">
+    <!-- Base CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}?v={{ asset_version('css/base.css') }}">
 
-    <style>
-        /* Custom styles for better UX */
-        .htmx-request {
-            opacity: 0.7;
-        }
-
-        .htmx-indicator {
-            opacity: 0;
-            transition: opacity 200ms ease-in;
-        }
-
-        .htmx-request .htmx-indicator {
-            opacity: 1;
-        }
-
-        .htmx-request.htmx-indicator {
-            opacity: 1;
-        }
-
-        /* Smooth transitions */
-        .transition-all {
-            transition: all 0.3s ease;
-        }
-
-        /* Custom scrollbar */
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
-    </style>
+    {% block extra_css %}{% endblock %}
 </head>
-<body class="bg-gray-50 font-sans">
-    <!-- Navigation -->
-    <nav class="bg-white shadow-sm border-b border-gray-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between h-16">
-                <div class="flex items-center">
-                    <div class="flex-shrink-0">
-                        <h1 class="text-xl font-bold text-gray-900">
-                            <a href="{{ url_for('index') }}" class="hover:text-blue-600 transition-colors">
-                                Respondr
-                            </a>
-                        </h1>
-                    </div>
-                    <div class="hidden md:ml-6 md:flex md:space-x-8">
-                        <a href="{{ url_for('index') }}"
-                           class="{% if request.endpoint == 'index' %}text-blue-600 border-b-2 border-blue-600{% else %}text-gray-500 hover:text-gray-700{% endif %} px-3 py-2 text-sm font-medium transition-colors">
-                            Inbox
-                        </a>
-                        <a href="{{ url_for('settings') }}"
-                           class="{% if request.endpoint == 'settings' %}text-blue-600 border-b-2 border-blue-600{% else %}text-gray-500 hover:text-gray-700{% endif %} px-3 py-2 text-sm font-medium transition-colors">
-                            Settings
-                        </a>
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-4">
-                    <!-- Sync Status -->
-                    <div id="sync-status" class="text-sm text-gray-500">
-                        <span class="inline-flex items-center">
-                            <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                            </svg>
-                            Last sync: <span id="last-sync-time">Loading...</span>
-                        </span>
-                    </div>
-
-                    <!-- Manual Sync Button -->
-                    <button
-                        hx-post="{{ url_for('manual_sync') }}"
-                        hx-trigger="click"
-                        hx-swap="none"
-                        hx-on:htmx:after-request="handleSyncResponse(event)"
-                        class="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors">
-                        <svg class="w-4 h-4 mr-1 htmx-indicator animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-                        </svg>
-                        <span class="htmx-indicator hidden">Syncing...</span>
-                        <span class="htmx-indicator-opposite">Sync Now</span>
-                    </button>
-                </div>
+<body class="bg-gray-50 font-sans h-full">
+    <div class="h-full flex">
+        <!-- Responsive Sidebar -->
+        <div class="w-14 sm:w-16 bg-white border-r border-gray-200 flex flex-col items-center py-3 sm:py-4 space-y-3 sm:space-y-4 flex-shrink-0">
+            <!-- Logo -->
+            <div class="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                <span class="text-white font-bold text-xs sm:text-sm">R</span>
             </div>
-        </div>
-    </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <!-- Flash Messages -->
-        <div id="flash-messages" class="mb-4">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="rounded-md p-4 {% if category == 'error' %}bg-red-50 text-red-800{% elif category == 'success' %}bg-green-50 text-green-800{% else %}bg-blue-50 text-blue-800{% endif %}">
-                            <div class="flex">
-                                <div class="ml-3">
-                                    <p class="text-sm font-medium">{{ message }}</p>
-                                </div>
-                                <div class="ml-auto pl-3">
-                                    <div class="-mx-1.5 -my-1.5">
-                                        <button type="button" onclick="this.parentElement.parentElement.parentElement.parentElement.remove()" class="inline-flex rounded-md p-1.5 {% if category == 'error' %}text-red-500 hover:bg-red-100{% elif category == 'success' %}text-green-500 hover:bg-green-100{% else %}text-blue-500 hover:bg-blue-100{% endif %} focus:outline-none focus:ring-2 focus:ring-offset-2 {% if category == 'error' %}focus:ring-red-500{% elif category == 'success' %}focus:ring-green-500{% else %}focus:ring-blue-500{% endif %}">
-                                            <svg class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                                                <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"></path>
-                                            </svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
+            <!-- Navigation Items -->
+            <nav class="flex flex-col space-y-2">
+                <a href="{{ url_for('index') }}"
+                   class="sidebar-item {% if request.endpoint == 'index' %}active{% endif %} p-2 sm:p-3 rounded-lg group relative"
+                   title="Inbox">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0H4m16 0l-2-2m0 0l-2 2m2-2v2M4 13l2-2m0 0l2 2m-2-2v2"></path>
+                    </svg>
+                    <div class="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                        Inbox
+                    </div>
+                </a>
+
+                <a href="{{ url_for('settings') }}"
+                   class="sidebar-item {% if request.endpoint == 'settings' %}active{% endif %} p-2 sm:p-3 rounded-lg group relative"
+                   title="Settings">
+                    <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <div class="absolute left-16 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white text-xs rounded py-1 px-2 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                        Settings
+                    </div>
+                </a>
+            </nav>
         </div>
 
-        {% block content %}{% endblock %}
-    </main>
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col min-w-0">
+            <!-- Main Content -->
+            <main class="flex-1 overflow-auto" id="main-content">
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
 
     <!-- Toast Notifications -->
     <div id="toast-container" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
-    <script>
-        // Handle sync response
-        function handleSyncResponse(event) {
-            const xhr = event.detail.xhr;
-            const response = JSON.parse(xhr.responseText);
+    <!-- Base JavaScript -->
+    <script src="{{ url_for('static', filename='js/base.js') }}?v={{ asset_version('js/base.js') }}"></script>
 
-            if (response.success) {
-                showToast('Sync completed successfully', 'success');
-                // Optionally refresh the ticket list
-                if (document.getElementById('ticket-list')) {
-                    htmx.trigger('#ticket-list', 'refresh');
-                }
-            } else {
-                showToast('Sync failed: ' + response.message, 'error');
-            }
-        }
-
-        // Show toast notification
-        function showToast(message, type = 'info') {
-            const container = document.getElementById('toast-container');
-            const toast = document.createElement('div');
-
-            const bgColor = type === 'success' ? 'bg-green-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500';
-
-            toast.className = `${bgColor} text-white px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 ease-in-out translate-x-full opacity-0`;
-            toast.innerHTML = `
-                <div class="flex items-center">
-                    <span>${message}</span>
-                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                        </svg>
-                    </button>
-                </div>
-            `;
-
-            container.appendChild(toast);
-
-            // Animate in
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full', 'opacity-0');
-            }, 100);
-
-            // Auto-remove after 5 seconds
-            setTimeout(() => {
-                toast.classList.add('translate-x-full', 'opacity-0');
-                setTimeout(() => {
-                    if (toast.parentElement) {
-                        toast.parentElement.removeChild(toast);
-                    }
-                }, 300);
-            }, 5000);
-        }
-
-        // Handle HTMX errors
-        document.body.addEventListener('htmx:responseError', function(event) {
-            showToast('An error occurred. Please try again.', 'error');
-        });
-
-        // Handle HTMX loading states
-        document.body.addEventListener('htmx:beforeRequest', function(event) {
-            const target = event.target;
-            if (target.classList.contains('htmx-indicator-toggle')) {
-                target.classList.add('htmx-request');
-            }
-        });
-
-        document.body.addEventListener('htmx:afterRequest', function(event) {
-            const target = event.target;
-            if (target.classList.contains('htmx-indicator-toggle')) {
-                target.classList.remove('htmx-request');
-            }
-        });
-
-        // Auto-refresh ticket list every 2 minutes
-        setInterval(function() {
-            if (document.getElementById('ticket-list')) {
-                htmx.trigger('#ticket-list', 'refresh');
-            }
-        }, 120000);
-
-        // Update last sync time periodically
-        function updateSyncTime() {
-            // This would be enhanced to fetch actual last sync time
-            document.getElementById('last-sync-time').textContent = 'Just now';
-        }
-    </script>
+    {% block extra_js %}{% endblock %}
 </body>
 </html>

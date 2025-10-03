@@ -13,67 +13,96 @@ The project currently supports:
 - ✅ Basic ticket management (view, search, filter)
 - ✅ Web-based configuration
 
-## Roadmap
+## Screenshots
+
+### Ticket List View
+![Ticket List](screenshots/ticket_list.png)
+*Modern, minimalistic ticket list with status indicators and quick filters*
+
+### Advanced Filtering
+![Ticket Filters](screenshots/tickets_filter.png)
+*Multi-select filters for status, priority, assignee, type, organization, and tags*
+
+### Ticket Details
+![Ticket View](screenshots/ticket_view.png)
+*Comprehensive ticket view with conversation history and quick actions*
+
+### Create New Ticket
+![Create Ticket](screenshots/create_ticket_form.png)
+*Streamlined ticket creation form with all essential fields*
+
+### Settings Dashboard
+![Settings](screenshots/settings_dashboard.png)
+*Web-based configuration for email integration and system settings*
+
+## Features & Roadmap
 
 ### 🎯 Core Ticketing Platform
 - **Multi-channel ticket creation**
-  - Email integration (✅ Complete)
-  - Web form submissions
-  - Manual ticket creation
-  - REST API for integrations
+  - ✅ Email integration (IMAP with attachment support)
+  - ✅ Web form submissions (widget API)
+  - ✅ Manual ticket creation
+  - ✅ REST API for integrations
 
-### 🤖 AI-Powered Automation
-- **AI service integration** for intelligent responses
-  - Automatic response composition
-  - Content analysis and suggestions
-  - Sentiment analysis
-
-- **AI-driven ticket management**
-  - Auto ticket tagging & prioritization
-  - Smart categorization
-  - Duplicate detection
-
-### 📋 Advanced Ticket Management
+### 📋 Ticket Management
 - **Ticket operations**
-  - Merge, split, and link tickets
-  - Ticket tagging and categorization
-  - Priority management and escalation
+  - ✅ Merge, split, and link tickets
+  - ✅ Ticket tagging and categorization
+  - ✅ Priority and urgency management
+  - 🚧 Escalation (model exists, automation pending)
 
-- **Rules-based automation**
-  - Auto-assignment based on content/sender
-  - Automated responses and workflows
-  - SLA management and notifications
+- **Advanced features**
+  - ✅ Saved filters with favorites
+  - ✅ Multi-select filtering
+  - ✅ Activity timeline
+  - ✅ Attachment handling (files and embedded images)
+  - ✅ Rich text editor for replies
 
 ### 🌐 Customer Experience
-- **Self-service portal**
-  - Customer ticket submission
-  - Ticket status tracking
-  - Knowledge base integration
+- **Widget & Submission**
+  - ✅ Embeddable widget for website integration
+  - ✅ Customer ticket submission via widget
+  - ❌ Self-service portal (planned)
+  - ❌ Ticket status tracking for customers (planned)
+  - ❌ Knowledge base integration (planned)
+  - ❌ Chat-to-ticket conversion (planned)
 
-- **Embeddable widget**
-  - Website integration
-  - Chat-to-ticket conversion
-  - Customizable branding
+### 🤖 AI-Powered Automation (Planned)
+- **AI service integration**
+  - ❌ Automatic response composition
+  - ❌ Content analysis and suggestions
+  - ❌ Sentiment analysis
+
+- **AI-driven ticket management**
+  - ❌ Auto ticket tagging & prioritization
+  - ❌ Smart categorization
+  - ❌ Duplicate detection
+
+### ⚙️ Automation & Workflows (Planned)
+- **Rules-based automation**
+  - 🚧 Auto-assignment (model ready, rules pending)
+  - ❌ Automated responses and workflows
+  - 🚧 SLA management (model ready, policies pending)
 
 ### 🌍 Enterprise Features
-- **Multilingual support**
-  - Multi-language interface
-  - Auto-translation capabilities
-  - Localized templates
+- **Access Control**
+  - 🚧 Role-based access control (roles exist, enforcement pending)
+  - ❌ Custom profiles & permissions (planned)
 
-- **Security & Compliance**
-  - Role-based access control
-  - Custom profiles & permissions
-  - GDPR compliance & data privacy controls
-  - IP restrictions and SSO support
-  - Comprehensive audit logs
+- **Compliance & Security**
+  - 🚧 Audit logs (activity tracking exists, system-wide pending)
+  - 🚧 Multilingual support (fields exist, i18n pending)
+  - ❌ GDPR compliance tools (planned)
+  - ❌ IP restrictions and SSO (planned)
 
 ### 🔗 Integration & Extensibility
-- **API & Webhooks**
-  - RESTful API for all operations
-  - Webhook notifications
-  - Third-party integrations
-  - Custom field support
+- **API & Integrations**
+  - ✅ RESTful API for core operations
+  - ❌ Webhook notifications (planned)
+  - ❌ Third-party integrations (Slack, Teams, etc.) (planned)
+  - 🚧 Custom fields (JSON field exists, UI pending)
+
+**Legend:** ✅ Implemented | 🚧 Partially Complete | ❌ Planned
 
 ---
 

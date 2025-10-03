@@ -1,0 +1,285 @@
+{% extends "base.html" %}
+
+{% block title %}Ticket Type Management - Settings{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb Navigation -->
+    {% set breadcrumb_title = 'Ticket Type Management' %}
+    {% include 'settings/components/breadcrumb.html' %}
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Ticket Type Management</h1>
+            <p class="mt-2 text-gray-600">Configure ticket types, priorities, and categorization</p>
+        </div>
+
+        <!-- Ticket Types Table -->
+        {% set table_config = {
+            'table_title': 'Ticket Types',
+            'table_description': 'Manage different types of tickets and their default settings',
+            'entity_type': 'ticket-types',
+            'entity_singular': 'Ticket Type',
+            'entity_plural': 'Ticket Types',
+            'table_columns': [
+                {'header': 'Type', 'key': 'name'},
+                {'header': 'Description', 'key': 'description'},
+                {'header': 'Default Priority', 'key': 'default_priority'},
+                {'header': 'Sort Order', 'key': 'sort_order'}
+            ]
+        } %}
+
+        {% with
+            table_title = table_config.table_title,
+            table_description = table_config.table_description,
+            entity_type = table_config.entity_type,
+            entity_singular = table_config.entity_singular,
+            entity_plural = table_config.entity_plural,
+            table_columns = table_config.table_columns
+        %}
+            {% include 'settings/components/master_data_table.html' %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Form Modal -->
+{% with entity_type = 'ticket-types', entity_singular = 'Ticket Type' %}
+    {% include 'settings/components/form_modal.html' %}
+{% endwith %}
+
+<!-- Delete Confirmation Modal -->
+<div id="ticket-types-delete-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Deactivate Ticket Type</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">Are you sure you want to deactivate this ticket type? It will no longer appear in ticket creation forms, but existing tickets will be preserved.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="executeDelete('ticket-types')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+                    Deactivate
+                </button>
+                <button type="button" onclick="closeDeleteModal('ticket-types')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Ticket Type-specific configuration
+const ticketTypeConfig = {
+    apiEndpoint: '/api/ticket-types',
+    entitySingular: 'Ticket Type',
+    formFields: [
+        {
+            name: 'name',
+            label: 'Type Name',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter ticket type name'
+        },
+        {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            placeholder: 'Brief description of this ticket type',
+            help: 'Describe when this ticket type should be used'
+        },
+        {
+            name: 'color',
+            label: 'Color',
+            type: 'color',
+            help: 'Color used for visual identification in the interface'
+        },
+        {
+            name: 'icon',
+            label: 'Icon',
+            type: 'select',
+            options: [
+                {value: 'ticket', label: '🎫 Ticket'},
+                {value: 'bug', label: '🐛 Bug'},
+                {value: 'feature', label: '✨ Feature'},
+                {value: 'question', label: '❓ Question'},
+                {value: 'support', label: '🛠️ Support'},
+                {value: 'account', label: '👤 Account'},
+                {value: 'billing', label: '💳 Billing'},
+                {value: 'security', label: '🔒 Security'},
+                {value: 'urgent', label: '🚨 Urgent'},
+                {value: 'feedback', label: '💬 Feedback'}
+            ],
+            help: 'Icon displayed next to the ticket type'
+        },
+        {
+            name: 'default_priority',
+            label: 'Default Priority',
+            type: 'select',
+            required: true,
+            options: [
+                {value: 1, label: 'Low'},
+                {value: 2, label: 'Normal'},
+                {value: 3, label: 'High'},
+                {value: 4, label: 'Critical'}
+            ],
+            help: 'Default priority assigned to new tickets of this type'
+        },
+        {
+            name: 'sort_order',
+            label: 'Sort Order',
+            type: 'number',
+            min: 0,
+            max: 100,
+            help: 'Lower numbers appear first in lists (0-100)'
+        }
+    ]
+};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadTicketTypes();
+    setupFormHandlers('ticket-types', ticketTypeConfig);
+});
+
+function loadTicketTypes() {
+    showLoading('ticket-types');
+
+    fetch('/api/ticket-types')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading('ticket-types');
+            if (data.success) {
+                currentEntityData['ticket-types'] = data.ticket_types;
+                renderTicketTypesTable(data.ticket_types);
+            } else {
+                showToast('Error loading ticket types: ' + data.message, 'error');
+                showEmpty('ticket-types');
+            }
+        })
+        .catch(error => {
+            hideLoading('ticket-types');
+            console.error('Error loading ticket types:', error);
+            showToast('Error loading ticket types', 'error');
+            showEmpty('ticket-types');
+        });
+}
+
+function renderTicketTypesTable(ticketTypes) {
+    const tbody = document.getElementById('ticket-types-table-body');
+
+    if (!ticketTypes || ticketTypes.length === 0) {
+        showEmpty('ticket-types');
+        return;
+    }
+
+    hideEmpty('ticket-types');
+    tbody.innerHTML = '';
+
+    // Sort by sort_order
+    ticketTypes.sort((a, b) => (a.sort_order || 999) - (b.sort_order || 999));
+
+    ticketTypes.forEach(type => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-8 w-8">
+                        <div class="h-8 w-8 rounded-lg flex items-center justify-center text-sm" style="background-color: ${type.color || '#6B7280'}20; color: ${type.color || '#6B7280'}">
+                            ${getIconForType(type.icon)}
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">${type.name}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${type.description || '-'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityBadgeClass(type.default_priority)}">
+                    ${getPriorityLabel(type.default_priority)}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${type.sort_order || '-'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${type.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${type.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                    type="button"
+                    onclick="openEditModal('ticket-types', ${type.id})"
+                    class="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200">
+                    Edit
+                </button>
+                <button
+                    type="button"
+                    onclick="confirmDelete('ticket-types', ${type.id})"
+                    class="text-red-600 hover:text-red-900 transition-colors duration-200">
+                    Deactivate
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+function getIconForType(icon) {
+    const icons = {
+        'ticket': '🎫',
+        'bug': '🐛',
+        'feature': '✨',
+        'question': '❓',
+        'support': '🛠️',
+        'account': '👤',
+        'billing': '💳',
+        'security': '🔒',
+        'urgent': '🚨',
+        'feedback': '💬'
+    };
+    return icons[icon] || '🎫';
+}
+
+function getPriorityBadgeClass(priority) {
+    switch(priority) {
+        case 1: return 'bg-green-100 text-green-800';
+        case 2: return 'bg-blue-100 text-blue-800';
+        case 3: return 'bg-yellow-100 text-yellow-800';
+        case 4: return 'bg-red-100 text-red-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function getPriorityLabel(priority) {
+    switch(priority) {
+        case 1: return 'Low';
+        case 2: return 'Normal';
+        case 3: return 'High';
+        case 4: return 'Critical';
+        default: return 'Unknown';
+    }
+}
+</script>
+
+<!-- Include the shared settings JavaScript -->
+<script src="/static/js/settings.js"></script>
+{% endblock %}

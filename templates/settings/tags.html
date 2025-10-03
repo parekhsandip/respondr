@@ -1,0 +1,230 @@
+{% extends "base.html" %}
+
+{% block title %}Tag Management - Settings{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb Navigation -->
+    {% set breadcrumb_title = 'Tag Management' %}
+    {% include 'settings/components/breadcrumb.html' %}
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Tag Management</h1>
+            <p class="mt-2 text-gray-600">Manage tags and labels for organizing tickets</p>
+        </div>
+
+        <!-- Tags Table -->
+            {% set table_config = {
+                'table_title': 'Tags',
+                'table_description': 'Manage tags used for categorizing and organizing tickets',
+                'entity_type': 'tags',
+                'entity_singular': 'Tag',
+                'entity_plural': 'Tags',
+                'table_columns': [
+                    {'header': 'Tag', 'key': 'name'},
+                    {'header': 'Description', 'key': 'description'},
+                    {'header': 'Usage Count', 'key': 'usage_count'}
+                ]
+            } %}
+
+        {% with
+            table_title = table_config.table_title,
+            table_description = table_config.table_description,
+            entity_type = table_config.entity_type,
+            entity_singular = table_config.entity_singular,
+            entity_plural = table_config.entity_plural,
+            table_columns = table_config.table_columns
+        %}
+            {% include 'settings/components/master_data_table.html' %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Form Modal -->
+{% with entity_type = 'tags', entity_singular = 'Tag' %}
+    {% include 'settings/components/form_modal.html' %}
+{% endwith %}
+
+<!-- Delete Confirmation Modal -->
+<div id="tags-delete-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Deactivate Tag</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">Are you sure you want to deactivate this tag? It will no longer appear in tag lists, but existing ticket associations will be preserved.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="executeDelete('tags')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+                    Deactivate
+                </button>
+                <button type="button" onclick="closeDeleteModal('tags')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Tag-specific configuration
+const tagConfig = {
+    apiEndpoint: '/api/tags',
+    entitySingular: 'Tag',
+    formFields: [
+        {
+            name: 'name',
+            label: 'Tag Name',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter tag name',
+            help: 'Keep it short and descriptive'
+        },
+        {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            placeholder: 'Brief description of when to use this tag (optional)',
+            help: 'Explain when this tag should be applied to tickets'
+        },
+        {
+            name: 'color',
+            label: 'Color',
+            type: 'color',
+            help: 'Color used for visual identification of this tag'
+        }
+    ]
+};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadTags();
+    setupFormHandlers('tags', tagConfig);
+});
+
+function loadTags() {
+    showLoading('tags');
+
+    Promise.all([
+        fetch('/api/tags'),
+        fetch('/api/tickets/search?status=all') // Get all tickets to count tag usage
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([tagsData, ticketsData]) => {
+        hideLoading('tags');
+
+        if (tagsData.success) {
+            // Calculate usage counts
+            const tagUsage = {};
+            if (ticketsData.success && ticketsData.tickets) {
+                ticketsData.tickets.forEach(ticket => {
+                    if (ticket.tags) {
+                        ticket.tags.forEach(tag => {
+                            tagUsage[tag.id] = (tagUsage[tag.id] || 0) + 1;
+                        });
+                    }
+                });
+            }
+
+            // Add usage counts to tags
+            const tagsWithUsage = tagsData.tags.map(tag => ({
+                ...tag,
+                usage_count: tagUsage[tag.id] || 0
+            }));
+
+            currentEntityData['tags'] = tagsWithUsage;
+            renderTagsTable(tagsWithUsage);
+        } else {
+            showToast('Error loading tags: ' + tagsData.message, 'error');
+            showEmpty('tags');
+        }
+    })
+    .catch(error => {
+        hideLoading('tags');
+        console.error('Error loading tags:', error);
+        showToast('Error loading tags', 'error');
+        showEmpty('tags');
+    });
+}
+
+function renderTagsTable(tags) {
+    const tbody = document.getElementById('tags-table-body');
+
+    if (!tags || tags.length === 0) {
+        showEmpty('tags');
+        return;
+    }
+
+    hideEmpty('tags');
+    tbody.innerHTML = '';
+
+    // Sort by usage count (most used first)
+    tags.sort((a, b) => (b.usage_count || 0) - (a.usage_count || 0));
+
+    tags.forEach(tag => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: ${tag.color || '#6B7280'}20; color: ${tag.color || '#6B7280'};">
+                        ${tag.name}
+                    </span>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${tag.description || '-'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <span class="text-sm font-medium text-gray-900">${tag.usage_count || 0}</span>
+                    ${tag.usage_count > 0 ? `
+                        <div class="ml-2 w-16 bg-gray-200 rounded-full h-1.5">
+                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${Math.min(100, (tag.usage_count / Math.max(...tags.map(t => t.usage_count || 0))) * 100)}%"></div>
+                        </div>
+                    ` : ''}
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${tag.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${tag.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                    type="button"
+                    onclick="openEditModal('tags', ${tag.id})"
+                    class="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200">
+                    Edit
+                </button>
+                <button
+                    type="button"
+                    onclick="confirmDelete('tags', ${tag.id})"
+                    class="text-red-600 hover:text-red-900 transition-colors duration-200 ${tag.usage_count > 0 ? 'opacity-50 cursor-not-allowed' : ''}"
+                    ${tag.usage_count > 0 ? 'disabled title="Cannot delete tag that is in use"' : ''}>
+                    ${tag.usage_count > 0 ? 'In Use' : 'Deactivate'}
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+</script>
+
+<!-- Include the shared settings JavaScript -->
+<script src="/static/js/settings.js"></script>
+{% endblock %}

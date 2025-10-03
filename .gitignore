@@ -81,3 +81,9 @@ CLAUDE.md
 app_context.md
 setup.py
 project_req.md
+run_migration.py
+*.db.*
+TICKET_RELATIONSHIPS_FIXES.md
+TICKET_RELATIONSHIPS_IMPLEMENTATION.md
+MODERN_UI_REDESIGN.md
+templates/components/ticket_list_old.html

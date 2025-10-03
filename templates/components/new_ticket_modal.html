@@ -1,0 +1,226 @@
+<!-- New Ticket Creation Modal -->
+<div id="new-ticket-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeNewTicketModal()"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg px-6 pt-6 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full">
+            <!-- Modal header -->
+            <div class="mb-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="new-ticket-modal-title">
+                        Create New Ticket
+                    </h3>
+                    <button type="button" onclick="closeNewTicketModal()"
+                            class="rounded-md text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Ticket creation form -->
+            <form id="new-ticket-form" class="space-y-4" onsubmit="createTicket(event)">
+
+                <!-- Main Fields Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Subject -->
+                    <div class="md:col-span-2">
+                        <label for="ticket-subject" class="block text-sm font-medium text-gray-700 mb-1">
+                            Subject <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               id="ticket-subject"
+                               name="subject"
+                               required
+                               class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="Brief description of the issue">
+                    </div>
+
+                    <!-- Customer Email -->
+                    <div>
+                        <label for="ticket-sender-email" class="block text-sm font-medium text-gray-700 mb-1">
+                            Customer Email <span class="text-red-500">*</span>
+                        </label>
+                        <input type="email"
+                               id="ticket-sender-email"
+                               name="sender_email"
+                               required
+                               class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="customer@example.com">
+                    </div>
+
+                    <!-- Customer Name -->
+                    <div>
+                        <label for="ticket-sender-name" class="block text-sm font-medium text-gray-700 mb-1">
+                            Customer Name
+                        </label>
+                        <input type="text"
+                               id="ticket-sender-name"
+                               name="sender_name"
+                               class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                               placeholder="John Doe">
+                    </div>
+
+                    <!-- Priority -->
+                    <div>
+                        <label for="ticket-priority" class="block text-sm font-medium text-gray-700 mb-1">
+                            Priority
+                        </label>
+                        <select id="ticket-priority"
+                                name="priority"
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="1" class="text-red-600">🔴 Urgent</option>
+                            <option value="2" class="text-red-600">🟠 High</option>
+                            <option value="3" selected>🟡 Normal</option>
+                            <option value="4" class="text-green-600">🟢 Low</option>
+                            <option value="5" class="text-green-600">⚪ Very Low</option>
+                        </select>
+                    </div>
+
+                    <!-- Organization -->
+                    <div>
+                        <label for="ticket-organization" class="block text-sm font-medium text-gray-700 mb-1">
+                            Organization <span class="text-red-500">*</span>
+                        </label>
+                        <select id="ticket-organization"
+                                name="organization_id"
+                                required
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Select organization</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+
+                    <!-- Assignee -->
+                    <div>
+                        <label for="ticket-assignee" class="block text-sm font-medium text-gray-700 mb-1">
+                            Assign to
+                        </label>
+                        <select id="ticket-assignee"
+                                name="assignee_id"
+                                class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                            <option value="">Unassigned</option>
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Message -->
+                <div>
+                    <label for="ticket-content" class="block text-sm font-medium text-gray-700 mb-1">
+                        Message <span class="text-red-500">*</span>
+                    </label>
+                    <textarea id="ticket-content"
+                              name="content_text"
+                              rows="5"
+                              required
+                              class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                              placeholder="Describe the issue or request in detail..."></textarea>
+                </div>
+
+                <!-- Advanced Fields Toggle -->
+                <div class="border-t pt-4">
+                    <button type="button"
+                            onclick="toggleAdvancedFields()"
+                            class="flex items-center text-sm text-blue-600 hover:text-blue-800">
+                        <svg id="advanced-chevron" class="w-4 h-4 mr-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                        </svg>
+                        Advanced Options
+                    </button>
+                </div>
+
+                <!-- Attachments -->
+                <div>
+                    <label for="ticket-attachments" class="block text-sm font-medium text-gray-700 mb-1">
+                        Attachments
+                    </label>
+                    <input type="file"
+                           id="ticket-attachments"
+                           name="attachments"
+                           multiple
+                           accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.gif,.zip,.csv,.xlsx"
+                           class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 file:mr-4 file:py-1 file:px-4 file:rounded-md file:border-0 file:text-sm file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100">
+                    <p class="mt-1 text-xs text-gray-500">Max 10 files, 5MB each. Supported: PDF, DOC, TXT, images, ZIP, CSV, XLSX</p>
+                    <div id="attachment-list" class="mt-2 space-y-1 hidden">
+                        <!-- Selected files will be shown here -->
+                    </div>
+                </div>
+
+                <!-- Advanced Fields (Initially Hidden) -->
+                <div id="advanced-fields" class="hidden space-y-4 border-t pt-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Ticket Type -->
+                        <div>
+                            <label for="ticket-type" class="block text-sm font-medium text-gray-700 mb-1">
+                                Type
+                            </label>
+                            <select id="ticket-type"
+                                    name="type_id"
+                                    class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                <option value="">Select type</option>
+                                <!-- Options will be populated by JavaScript -->
+                            </select>
+                        </div>
+
+                        <!-- CC Emails -->
+                        <div class="md:col-span-2">
+                            <label for="ticket-cc-emails" class="block text-sm font-medium text-gray-700 mb-1">
+                                CC Emails
+                            </label>
+                            <input type="text"
+                                   id="ticket-cc-emails"
+                                   name="cc_emails"
+                                   class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                   placeholder="email1@example.com, email2@example.com">
+                            <p class="mt-1 text-xs text-gray-500">Separate multiple emails with commas</p>
+                        </div>
+
+                        <!-- Internal Notes -->
+                        <div class="md:col-span-2">
+                            <label for="ticket-notes" class="block text-sm font-medium text-gray-700 mb-1">
+                                Internal Notes
+                            </label>
+                            <textarea id="ticket-notes"
+                                      name="internal_notes"
+                                      rows="3"
+                                      class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                      placeholder="Internal notes visible only to agents..."></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Form Actions -->
+                <div class="mt-8 flex justify-end space-x-3 border-t pt-4">
+                    <button type="button"
+                            onclick="closeNewTicketModal()"
+                            class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button type="submit"
+                            id="create-ticket-btn"
+                            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 transition-colors duration-200">
+                        <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                        Create Ticket
+                    </button>
+                </div>
+            </form>
+
+            <!-- Loading State -->
+            <div id="ticket-form-loading" class="hidden absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center rounded-lg">
+                <div class="text-center">
+                    <svg class="animate-spin h-8 w-8 mx-auto text-blue-600 mb-2" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                    </svg>
+                    <p class="text-sm text-gray-600">Creating ticket...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

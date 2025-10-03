@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget Test</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            color: #2d3748;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 6px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .info-box h3 {
+            color: #495057;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .info-box ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .info-box li {
+            margin-bottom: 8px;
+            color: #666;
+        }
+
+        .sample-content {
+            margin: 40px 0;
+            padding: 20px 0;
+        }
+
+        .sample-content p {
+            margin-bottom: 20px;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Widget Simulation</h1>
+        <p class="subtitle">This page simulates how the support widget appears on your website.</p>
+
+        <div class="info-box">
+            <h3>Testing Instructions</h3>
+            <ul>
+                <li>Look for the support widget button in the bottom-right corner</li>
+                <li>Click the button to open the support form</li>
+                <li>Test form submission functionality</li>
+                <li>Check widget positioning and responsiveness</li>
+            </ul>
+        </div>
+
+        <div class="sample-content">
+            <h2>Sample Website Content</h2>
+            <p>This is sample content to demonstrate how the widget integrates with your existing website. The widget should appear as a floating button that doesn't interfere with your normal content.</p>
+
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris.</p>
+
+            <p>Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+        </div>
+    </div>
+
+    <!-- Respondr Support Widget -->
+    <script>
+        // Get configuration from URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+
+        // Configure widget based on parameters BEFORE loading the widget script
+        window.RespondrWidget = {
+            apiUrl: '{{ api_url }}' || window.location.origin,
+            primaryColor: urlParams.get('primaryColor') || '#3B82F6',
+            position: urlParams.get('position') || 'bottom-right',
+            welcomeMessage: urlParams.get('welcomeMessage') || 'Hi! How can we help you today?',
+            requireName: urlParams.get('requireName') === 'true',
+            requireSubject: urlParams.get('requireSubject') === 'true',
+            allowAttachments: urlParams.get('allowAttachments') === 'true',
+            debug: true
+        };
+
+        console.log('🔧 Widget Configuration Set:', window.RespondrWidget);
+    </script>
+    <!-- Load widget script after configuration -->
+    <script
+        src="{{ api_url }}/static/js/widget.js"
+        onload="console.log('✅ Widget script loaded successfully')"
+        onerror="console.error('❌ Failed to load widget script from:', this.src)">
+    </script>
+
+    <script>
+        // Fallback widget loading function
+        function loadWidgetFallback() {
+            console.log('🔧 Loading widget via fallback method...');
+
+            // Try to load script dynamically
+            const script = document.createElement('script');
+            script.src = '{{ api_url }}/static/js/widget.js';
+            script.onload = function() {
+                console.log('✅ Fallback widget script loaded');
+                // Widget should initialize automatically
+            };
+            script.onerror = function() {
+                console.error('❌ Fallback loading also failed');
+                console.log('🛠️ Creating manual widget for testing...');
+                createManualWidget();
+            };
+
+            document.head.appendChild(script);
+        }
+
+        // Create a basic manual widget for testing if all else fails
+        function createManualWidget() {
+            console.log('🎨 Creating manual test widget...');
+
+            // Create button
+            const button = document.createElement('button');
+            button.style.cssText = `
+                position: fixed;
+                bottom: 20px;
+                right: 20px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background: ${window.RespondrWidget.primaryColor};
+                border: none;
+                cursor: pointer;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+                z-index: 9999;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                color: white;
+            `;
+            button.innerHTML = '💬';
+            button.onclick = function() {
+                alert('Manual test widget clicked! Configuration applied: ' + JSON.stringify(window.RespondrWidget, null, 2));
+            };
+
+            document.body.appendChild(button);
+            console.log('✅ Manual test widget created successfully');
+        }
+
+        // Add some interactivity to the demo page
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('🧪 Widget Simulation Page Loaded');
+            console.log('📍 Current URL:', window.location.href);
+            console.log('🔗 URL Parameters:', window.location.search);
+
+            // Auto-hide widget info after 8 seconds
+            setTimeout(function() {
+                const widgetInfo = document.getElementById('widget-info');
+                if (widgetInfo && widgetInfo.style.display !== 'none') {
+                    widgetInfo.style.opacity = '0.7';
+                }
+            }, 8000);
+
+            // Check if widget elements exist
+            setTimeout(function() {
+                const widgetButton = document.querySelector('.respondr-button');
+                const widgetModal = document.querySelector('.respondr-modal');
+
+                console.log('🔍 Widget Button Found:', !!widgetButton);
+                console.log('🔍 Widget Modal Found:', !!widgetModal);
+
+                if (widgetButton) {
+                    console.log('✅ Widget initialized successfully');
+                    console.log('📊 Widget Position:', widgetButton.className);
+                } else {
+                    console.error('❌ Widget button not found - widget may not have loaded');
+                    console.log('🔧 Trying to diagnose issue...');
+
+                    // Check if RespondrWidget object exists
+                    if (window.RespondrWidget) {
+                        console.log('✅ RespondrWidget config exists:', window.RespondrWidget);
+
+                        // Try to manually create widget if it didn't auto-initialize
+                        console.log('🔧 Attempting manual widget initialization...');
+
+                        // Manually trigger widget creation if needed
+                        if (window.RespondrWidget && typeof window.RespondrWidget.init === 'function') {
+                            window.RespondrWidget.init();
+                        }
+                    } else {
+                        console.error('❌ RespondrWidget config missing');
+                    }
+
+                    // List all scripts loaded
+                    const scripts = document.querySelectorAll('script');
+                    console.log('📜 Scripts loaded:', Array.from(scripts).map(s => s.src || 'inline'));
+
+                    // If widget still not loaded, try alternative loading method
+                    console.log('🔄 Attempting alternative loading method...');
+                    loadWidgetFallback();
+                }
+            }, 2000);
+        });
+    </script>
+</body>
+</html>

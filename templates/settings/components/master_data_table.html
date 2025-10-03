@@ -1,0 +1,103 @@
+<!-- Master Data Table Component -->
+<!-- This component can be customized via parameters passed from the parent template -->
+
+<div class="bg-white shadow-sm rounded-lg border border-gray-200">
+    <!-- Table Header -->
+    <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+        <div>
+            <h2 class="text-lg font-medium text-gray-900">{{ table_title }}</h2>
+            <p class="text-sm text-gray-600 mt-1">{{ table_description }}</p>
+        </div>
+        <button
+            type="button"
+            onclick="openCreateModal('{{ entity_type }}')"
+            class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+            </svg>
+            Add {{ entity_singular }}
+        </button>
+    </div>
+
+    <!-- Table Content -->
+    <div class="overflow-hidden">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-50">
+                <tr>
+                    {% for column in table_columns %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        {{ column.header }}
+                    </th>
+                    {% endfor %}
+                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Status
+                    </th>
+                    <th scope="col" class="relative px-6 py-3">
+                        <span class="sr-only">Actions</span>
+                    </th>
+                </tr>
+            </thead>
+            <tbody id="{{ entity_type }}-table-body" class="bg-white divide-y divide-gray-200">
+                <!-- Table rows will be populated by JavaScript -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Loading State -->
+    <div id="{{ entity_type }}-loading" class="px-6 py-8 text-center">
+        <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-sm text-blue-600">
+            <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Loading {{ table_title.lower() }}...
+        </div>
+    </div>
+
+    <!-- Empty State -->
+    <div id="{{ entity_type }}-empty" class="px-6 py-8 text-center hidden">
+        <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 7a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V9a2 2 0 00-2-2H5z"></path>
+        </svg>
+        <h3 class="mt-2 text-sm font-medium text-gray-900">No {{ entity_plural.lower() }} found</h3>
+        <p class="mt-1 text-sm text-gray-500">Get started by creating a new {{ entity_singular.lower() }}.</p>
+        <div class="mt-6">
+            <button
+                type="button"
+                onclick="openCreateModal('{{ entity_type }}')"
+                class="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Add {{ entity_singular }}
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Action Buttons Template (will be used by JavaScript) -->
+<template id="{{ entity_type }}-actions-template">
+    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+        <button
+            type="button"
+            onclick="openEditModal('{{ entity_type }}', this.dataset.itemId)"
+            class="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200"
+            data-item-id="">
+            Edit
+        </button>
+        <button
+            type="button"
+            onclick="confirmDelete('{{ entity_type }}', this.dataset.itemId)"
+            class="text-red-600 hover:text-red-900 transition-colors duration-200"
+            data-item-id="">
+            Delete
+        </button>
+    </td>
+</template>
+
+<!-- Status Badge Template -->
+<template id="{{ entity_type }}-status-template">
+    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium status-badge">
+        <!-- Status text will be set by JavaScript -->
+    </span>
+</template>

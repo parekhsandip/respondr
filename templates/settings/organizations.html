@@ -1,0 +1,271 @@
+{% extends "base.html" %}
+
+{% block title %}Organization Management - Settings{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb Navigation -->
+    {% set breadcrumb_title = 'Organization Management' %}
+    {% include 'settings/components/breadcrumb.html' %}
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Organization Management</h1>
+            <p class="mt-2 text-gray-600">Manage customer organizations and company details</p>
+        </div>
+
+        <!-- Organizations Table -->
+        {% set table_config = {
+            'table_title': 'Organizations',
+            'table_description': 'Manage customer organizations and their information',
+            'entity_type': 'organizations',
+            'entity_singular': 'Organization',
+            'entity_plural': 'Organizations',
+            'table_columns': [
+                {'header': 'Organization', 'key': 'name'},
+                {'header': 'Domain', 'key': 'domain'},
+                {'header': 'Industry', 'key': 'industry'},
+                {'header': 'Size', 'key': 'size'}
+            ]
+        } %}
+
+        {% with
+            table_title = table_config.table_title,
+            table_description = table_config.table_description,
+            entity_type = table_config.entity_type,
+            entity_singular = table_config.entity_singular,
+            entity_plural = table_config.entity_plural,
+            table_columns = table_config.table_columns
+        %}
+            {% include 'settings/components/master_data_table.html' %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Form Modal -->
+{% with entity_type = 'organizations', entity_singular = 'Organization' %}
+    {% include 'settings/components/form_modal.html' %}
+{% endwith %}
+
+<!-- Delete Confirmation Modal -->
+<div id="organizations-delete-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Deactivate Organization</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">Are you sure you want to deactivate this organization? They will no longer appear in dropdowns, but their data and tickets will be preserved.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="executeDelete('organizations')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+                    Deactivate
+                </button>
+                <button type="button" onclick="closeDeleteModal('organizations')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Organization-specific configuration
+const organizationConfig = {
+    apiEndpoint: '/api/organizations',
+    entitySingular: 'Organization',
+    formFields: [
+        {
+            name: 'name',
+            label: 'Organization Name',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter organization name'
+        },
+        {
+            name: 'domain',
+            label: 'Domain',
+            type: 'text',
+            placeholder: 'example.com',
+            help: 'Primary email domain for this organization'
+        },
+        {
+            name: 'website',
+            label: 'Website',
+            type: 'text',
+            placeholder: 'https://example.com',
+            help: 'Organization website URL'
+        },
+        {
+            name: 'industry',
+            label: 'Industry',
+            type: 'select',
+            options: [
+                {value: 'technology', label: 'Technology'},
+                {value: 'healthcare', label: 'Healthcare'},
+                {value: 'finance', label: 'Finance'},
+                {value: 'education', label: 'Education'},
+                {value: 'retail', label: 'Retail'},
+                {value: 'manufacturing', label: 'Manufacturing'},
+                {value: 'consulting', label: 'Consulting'},
+                {value: 'non-profit', label: 'Non-Profit'},
+                {value: 'government', label: 'Government'},
+                {value: 'other', label: 'Other'}
+            ]
+        },
+        {
+            name: 'size',
+            label: 'Organization Size',
+            type: 'select',
+            options: [
+                {value: '1-10', label: '1-10 employees'},
+                {value: '11-50', label: '11-50 employees'},
+                {value: '51-200', label: '51-200 employees'},
+                {value: '201-500', label: '201-500 employees'},
+                {value: '501-1000', label: '501-1000 employees'},
+                {value: '1000+', label: '1000+ employees'}
+            ]
+        },
+        {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            placeholder: 'Brief description of the organization (optional)',
+            help: 'Additional notes about this organization'
+        }
+    ]
+};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadOrganizations();
+    setupFormHandlers('organizations', organizationConfig);
+});
+
+function loadOrganizations() {
+    showLoading('organizations');
+
+    fetch('/api/organizations')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading('organizations');
+            if (data.success) {
+                currentEntityData['organizations'] = data.organizations;
+                renderOrganizationsTable(data.organizations);
+            } else {
+                showToast('Error loading organizations: ' + data.message, 'error');
+                showEmpty('organizations');
+            }
+        })
+        .catch(error => {
+            hideLoading('organizations');
+            console.error('Error loading organizations:', error);
+            showToast('Error loading organizations', 'error');
+            showEmpty('organizations');
+        });
+}
+
+function renderOrganizationsTable(organizations) {
+    const tbody = document.getElementById('organizations-table-body');
+
+    if (!organizations || organizations.length === 0) {
+        showEmpty('organizations');
+        return;
+    }
+
+    hideEmpty('organizations');
+    tbody.innerHTML = '';
+
+    organizations.forEach(org => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-8 w-8">
+                        <div class="h-8 w-8 bg-purple-100 rounded-lg flex items-center justify-center text-sm font-medium text-purple-600">
+                            ${org.name ? org.name[0].toUpperCase() : 'O'}
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">${org.name}</div>
+                        ${org.description ? `<div class="text-sm text-gray-500">${truncateText(org.description, 50)}</div>` : ''}
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${org.domain || '-'}</div>
+                ${org.website ? `<div class="text-sm text-gray-500">${org.website}</div>` : ''}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                ${org.industry ? `<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getIndustryBadgeClass(org.industry)}">${formatIndustry(org.industry)}</span>` : '<span class="text-gray-400">-</span>'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${org.size || '-'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${org.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${org.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                    type="button"
+                    onclick="openEditModal('organizations', ${org.id})"
+                    class="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200">
+                    Edit
+                </button>
+                <button
+                    type="button"
+                    onclick="confirmDelete('organizations', ${org.id})"
+                    class="text-red-600 hover:text-red-900 transition-colors duration-200">
+                    Deactivate
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+function getIndustryBadgeClass(industry) {
+    const classes = {
+        'technology': 'bg-blue-100 text-blue-800',
+        'healthcare': 'bg-green-100 text-green-800',
+        'finance': 'bg-yellow-100 text-yellow-800',
+        'education': 'bg-purple-100 text-purple-800',
+        'retail': 'bg-pink-100 text-pink-800',
+        'manufacturing': 'bg-orange-100 text-orange-800',
+        'consulting': 'bg-indigo-100 text-indigo-800',
+        'non-profit': 'bg-teal-100 text-teal-800',
+        'government': 'bg-red-100 text-red-800'
+    };
+    return classes[industry] || 'bg-gray-100 text-gray-800';
+}
+
+function formatIndustry(industry) {
+    return industry.split('-').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1)
+    ).join(' ');
+}
+
+function truncateText(text, maxLength) {
+    if (!text) return '';
+    return text.length > maxLength ? text.substring(0, maxLength) + '...' : text;
+}
+</script>
+
+<!-- Include the shared settings JavaScript -->
+<script src="/static/js/settings.js"></script>
+{% endblock %}

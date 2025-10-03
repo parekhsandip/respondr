@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+
+{% block title %}Status Management - Settings{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb Navigation -->
+    {% set breadcrumb_title = 'Status Management' %}
+    {% include 'settings/components/breadcrumb.html' %}
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">Status Management</h1>
+            <p class="mt-2 text-gray-600">Manage ticket statuses and workflow states</p>
+        </div>
+
+        <!-- Statuses Table -->
+            {% set table_config = {
+                'table_title': 'Statuses',
+                'table_description': 'Manage statuses used for tracking ticket workflow',
+                'entity_type': 'statuses',
+                'entity_singular': 'Status',
+                'entity_plural': 'Statuses',
+                'table_columns': [
+                    {'header': 'Status', 'key': 'name'},
+                    {'header': 'Description', 'key': 'description'},
+                    {'header': 'Usage Count', 'key': 'usage_count'}
+                ]
+            } %}
+
+        {% with
+            table_title = table_config.table_title,
+            table_description = table_config.table_description,
+            entity_type = table_config.entity_type,
+            entity_singular = table_config.entity_singular,
+            entity_plural = table_config.entity_plural,
+            table_columns = table_config.table_columns
+        %}
+            {% include 'settings/components/master_data_table.html' %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Form Modal -->
+{% with entity_type = 'statuses', entity_singular = 'Status' %}
+    {% include 'settings/components/form_modal.html' %}
+{% endwith %}
+
+<!-- Delete Confirmation Modal -->
+<div id="statuses-delete-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Deactivate Status</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">Are you sure you want to deactivate this status? It will no longer appear in status lists, but existing tickets with this status will be preserved.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="executeDelete('statuses')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+                    Deactivate
+                </button>
+                <button type="button" onclick="closeDeleteModal('statuses')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Status-specific configuration
+const statusConfig = {
+    apiEndpoint: '/api/statuses',
+    entitySingular: 'Status',
+    formFields: [
+        {
+            name: 'name',
+            label: 'Status Name',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter status name',
+            help: 'Keep it short and descriptive (e.g., New, Open, Solved)'
+        },
+        {
+            name: 'description',
+            label: 'Description',
+            type: 'textarea',
+            placeholder: 'Brief description of this status (optional)',
+            help: 'Explain what this status represents in the ticket workflow'
+        },
+        {
+            name: 'color',
+            label: 'Color',
+            type: 'color',
+            help: 'Color used for visual identification of this status'
+        },
+        {
+            name: 'is_closed_status',
+            label: 'Closed Status',
+            type: 'checkbox',
+            help: 'Mark as true if this status represents a closed/resolved ticket'
+        },
+        {
+            name: 'display_order',
+            label: 'Display Order',
+            type: 'number',
+            placeholder: '0',
+            help: 'Order in which this status appears (lower numbers appear first)'
+        }
+    ]
+};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadStatuses();
+    setupFormHandlers('statuses', statusConfig);
+});
+
+function loadStatuses() {
+    showLoading('statuses');
+
+    Promise.all([
+        fetch('/api/statuses'),
+        fetch('/api/tickets/search?status=all') // Get all tickets to count status usage
+    ])
+    .then(responses => Promise.all(responses.map(r => r.json())))
+    .then(([statusesData, ticketsData]) => {
+        hideLoading('statuses');
+
+        if (statusesData.success) {
+            // Calculate usage counts
+            const statusUsage = {};
+            if (ticketsData.success && ticketsData.tickets) {
+                ticketsData.tickets.forEach(ticket => {
+                    if (ticket.status) {
+                        statusUsage[ticket.status] = (statusUsage[ticket.status] || 0) + 1;
+                    }
+                });
+            }
+
+            // Add usage counts to statuses
+            const statusesWithUsage = statusesData.statuses.map(status => ({
+                ...status,
+                usage_count: statusUsage[status.name.toLowerCase().replace(/\s+/g, '-')] || 0
+            }));
+
+            currentEntityData['statuses'] = statusesWithUsage;
+            renderStatusesTable(statusesWithUsage);
+        } else {
+            showToast('Error loading statuses: ' + statusesData.message, 'error');
+            showEmpty('statuses');
+        }
+    })
+    .catch(error => {
+        hideLoading('statuses');
+        console.error('Error loading statuses:', error);
+        showToast('Error loading statuses', 'error');
+        showEmpty('statuses');
+    });
+}
+
+function renderStatusesTable(statuses) {
+    const tbody = document.getElementById('statuses-table-body');
+
+    if (!statuses || statuses.length === 0) {
+        showEmpty('statuses');
+        return;
+    }
+
+    hideEmpty('statuses');
+    tbody.innerHTML = '';
+
+    // Sort by display order, then by usage count
+    statuses.sort((a, b) => {
+        if (a.display_order !== b.display_order) {
+            return a.display_order - b.display_order;
+        }
+        return (b.usage_count || 0) - (a.usage_count || 0);
+    });
+
+    statuses.forEach(status => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium" style="background-color: ${status.color || '#6B7280'}20; color: ${status.color || '#6B7280'};">
+                        ${status.name}
+                    </span>
+                    ${status.is_closed_status ? '<span class="ml-2 text-xs text-gray-500">(Closed)</span>' : ''}
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <div class="text-sm text-gray-900">${status.description || '-'}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <span class="text-sm font-medium text-gray-900">${status.usage_count || 0}</span>
+                    ${status.usage_count > 0 ? `
+                        <div class="ml-2 w-16 bg-gray-200 rounded-full h-1.5">
+                            <div class="bg-blue-600 h-1.5 rounded-full" style="width: ${Math.min(100, (status.usage_count / Math.max(...statuses.map(s => s.usage_count || 0))) * 100)}%"></div>
+                        </div>
+                    ` : ''}
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${status.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${status.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                    type="button"
+                    onclick="openEditModal('statuses', ${status.id})"
+                    class="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200">
+                    Edit
+                </button>
+                <button
+                    type="button"
+                    onclick="confirmDelete('statuses', ${status.id})"
+                    class="text-red-600 hover:text-red-900 transition-colors duration-200 ${status.usage_count > 0 ? 'opacity-50 cursor-not-allowed' : ''}"
+                    ${status.usage_count > 0 ? 'disabled title="Cannot delete status that is in use"' : ''}>
+                    ${status.usage_count > 0 ? 'In Use' : 'Deactivate'}
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+</script>
+
+<!-- Include the shared settings JavaScript -->
+<script src="/static/js/settings.js"></script>
+{% endblock %}

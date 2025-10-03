@@ -1,0 +1,284 @@
+{% extends "base.html" %}
+
+{% block title %}User Management - Settings{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50">
+    <!-- Breadcrumb Navigation -->
+    {% set breadcrumb_title = 'User Management' %}
+    {% include 'settings/components/breadcrumb.html' %}
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Header -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">User Management</h1>
+            <p class="mt-2 text-gray-600">Manage agents, users, roles, and permissions</p>
+        </div>
+
+        <!-- Agents Table -->
+            {% set table_config = {
+                'table_title': 'Agents',
+                'table_description': 'Manage system users and their access permissions',
+                'entity_type': 'agents',
+                'entity_singular': 'Agent',
+                'entity_plural': 'Agents',
+                'table_columns': [
+                    {'header': 'Name', 'key': 'name'},
+                    {'header': 'Email', 'key': 'email'},
+                    {'header': 'Role', 'key': 'role'},
+                    {'header': 'Last Login', 'key': 'last_login'}
+                ]
+            } %}
+
+        {% with
+            table_title = table_config.table_title,
+            table_description = table_config.table_description,
+            entity_type = table_config.entity_type,
+            entity_singular = table_config.entity_singular,
+            entity_plural = table_config.entity_plural,
+            table_columns = table_config.table_columns
+        %}
+            {% include 'settings/components/master_data_table.html' %}
+        {% endwith %}
+    </div>
+</div>
+
+<!-- Form Modal -->
+{% with entity_type = 'agents', entity_singular = 'Agent' %}
+    {% include 'settings/components/form_modal.html' %}
+{% endwith %}
+
+<!-- Delete Confirmation Modal -->
+<div id="agents-delete-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity"></div>
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <div class="sm:flex sm:items-start">
+                <div class="mx-auto flex-shrink-0 flex items-center justify-center h-12 w-12 rounded-full bg-red-100 sm:mx-0 sm:h-10 sm:w-10">
+                    <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                    </svg>
+                </div>
+                <div class="mt-3 text-center sm:mt-0 sm:ml-4 sm:text-left">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900">Deactivate Agent</h3>
+                    <div class="mt-2">
+                        <p class="text-sm text-gray-500">Are you sure you want to deactivate this agent? They will no longer be able to access the system, but their data will be preserved.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
+                <button type="button" onclick="executeDelete('agents')" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:w-auto sm:text-sm">
+                    Deactivate
+                </button>
+                <button type="button" onclick="closeDeleteModal('agents')" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:w-auto sm:text-sm">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Agent-specific configuration
+const agentConfig = {
+    apiEndpoint: '/api/agents',
+    formFields: [
+        {
+            name: 'username',
+            label: 'Username',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter username'
+        },
+        {
+            name: 'email',
+            label: 'Email Address',
+            type: 'email',
+            required: true,
+            placeholder: 'Enter email address'
+        },
+        {
+            name: 'first_name',
+            label: 'First Name',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter first name'
+        },
+        {
+            name: 'last_name',
+            label: 'Last Name',
+            type: 'text',
+            required: true,
+            placeholder: 'Enter last name'
+        },
+        {
+            name: 'role',
+            label: 'Role',
+            type: 'select',
+            required: true,
+            options: [
+                {value: 'admin', label: 'Administrator'},
+                {value: 'agent', label: 'Agent'},
+                {value: 'manager', label: 'Manager'}
+            ]
+        },
+        {
+            name: 'timezone',
+            label: 'Timezone',
+            type: 'select',
+            options: [
+                {value: 'UTC', label: 'UTC'},
+                {value: 'America/New_York', label: 'Eastern Time'},
+                {value: 'America/Chicago', label: 'Central Time'},
+                {value: 'America/Denver', label: 'Mountain Time'},
+                {value: 'America/Los_Angeles', label: 'Pacific Time'}
+            ]
+        },
+        {
+            name: 'signature',
+            label: 'Email Signature',
+            type: 'textarea',
+            placeholder: 'Enter email signature (optional)',
+            help: 'This will be appended to outgoing emails'
+        }
+    ]
+};
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+    loadAgents();
+    setupFormHandlers('agents', agentConfig);
+});
+
+function loadAgents() {
+    showLoading('agents');
+
+    fetch('/api/agents')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading('agents');
+            if (data.success) {
+                renderAgentsTable(data.agents);
+            } else {
+                showToast('Error loading agents: ' + data.message, 'error');
+                showEmpty('agents');
+            }
+        })
+        .catch(error => {
+            hideLoading('agents');
+            console.error('Error loading agents:', error);
+            showToast('Error loading agents', 'error');
+            showEmpty('agents');
+        });
+}
+
+function renderAgentsTable(agents) {
+    const tbody = document.getElementById('agents-table-body');
+
+    if (!agents || agents.length === 0) {
+        showEmpty('agents');
+        return;
+    }
+
+    tbody.innerHTML = '';
+
+    agents.forEach(agent => {
+        const row = document.createElement('tr');
+        row.className = 'hover:bg-gray-50';
+
+        row.innerHTML = `
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 h-8 w-8">
+                        <div class="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center text-sm font-medium text-gray-600">
+                            ${agent.first_name ? agent.first_name[0].toUpperCase() : 'A'}
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <div class="text-sm font-medium text-gray-900">${agent.first_name} ${agent.last_name}</div>
+                        <div class="text-sm text-gray-500">@${agent.username}</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <div class="text-sm text-gray-900">${agent.email}</div>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getRoleBadgeClass(agent.role)}">
+                    ${agent.role}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                ${formatDate(agent.last_login_at) || 'Never'}
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap">
+                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${agent.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                    ${agent.is_active ? 'Active' : 'Inactive'}
+                </span>
+            </td>
+            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <button
+                    type="button"
+                    onclick="openEditModal('agents', ${agent.id})"
+                    class="text-blue-600 hover:text-blue-900 mr-4 transition-colors duration-200">
+                    Edit
+                </button>
+                <button
+                    type="button"
+                    onclick="confirmDelete('agents', ${agent.id})"
+                    class="text-red-600 hover:text-red-900 transition-colors duration-200">
+                    Deactivate
+                </button>
+            </td>
+        `;
+
+        tbody.appendChild(row);
+    });
+}
+
+function getRoleBadgeClass(role) {
+    switch(role) {
+        case 'admin': return 'bg-purple-100 text-purple-800';
+        case 'manager': return 'bg-blue-100 text-blue-800';
+        case 'agent': return 'bg-green-100 text-green-800';
+        default: return 'bg-gray-100 text-gray-800';
+    }
+}
+
+function formatDate(dateString) {
+    if (!dateString) return null;
+    return new Date(dateString).toLocaleDateString();
+}
+
+// Store current agents data for editing
+let currentAgentsData = [];
+
+// Update the loadAgents function to store data
+function loadAgents() {
+    showLoading('agents');
+
+    fetch('/api/agents')
+        .then(response => response.json())
+        .then(data => {
+            hideLoading('agents');
+            if (data.success) {
+                currentAgentsData = data.agents;
+                renderAgentsTable(data.agents);
+            } else {
+                showToast('Error loading agents: ' + data.message, 'error');
+                showEmpty('agents');
+            }
+        })
+        .catch(error => {
+            hideLoading('agents');
+            console.error('Error loading agents:', error);
+            showToast('Error loading agents', 'error');
+            showEmpty('agents');
+        });
+}
+</script>
+
+<!-- Include the shared settings JavaScript -->
+<script src="/static/js/settings.js"></script>
+{% endblock %}

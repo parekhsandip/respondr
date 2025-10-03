@@ -1,0 +1,144 @@
+<!-- Form Modal Component -->
+<!-- This modal can be customized via parameters and JavaScript configuration -->
+
+<div id="{{ entity_type }}-modal" class="fixed inset-0 z-50 overflow-y-auto hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+        <!-- Background overlay -->
+        <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" aria-hidden="true"></div>
+
+        <!-- Modal panel -->
+        <div class="inline-block align-bottom bg-white rounded-lg px-4 pt-5 pb-4 text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full sm:p-6">
+            <!-- Modal header -->
+            <div class="mb-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg leading-6 font-medium text-gray-900" id="{{ entity_type }}-modal-title">
+                        Add {{ entity_singular }}
+                    </h3>
+                    <button
+                        type="button"
+                        onclick="closeModal('{{ entity_type }}')"
+                        class="rounded-md text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal form -->
+            <form id="{{ entity_type }}-form" class="space-y-4">
+                <input type="hidden" id="{{ entity_type }}-id" name="id" value="">
+
+                <!-- Form fields will be dynamically generated based on entity type -->
+                <div id="{{ entity_type }}-form-fields">
+                    <!-- Dynamic form fields will be inserted here -->
+                </div>
+
+                <!-- Form actions -->
+                <div class="mt-6 flex justify-end space-x-3">
+                    <button
+                        type="button"
+                        onclick="closeModal('{{ entity_type }}')"
+                        class="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors duration-200">
+                        Cancel
+                    </button>
+                    <button
+                        type="submit"
+                        id="{{ entity_type }}-submit-btn"
+                        class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 transition-colors duration-200">
+                        Save {{ entity_singular }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Form Field Templates -->
+<template id="text-field-template">
+    <div>
+        <label for="" class="block text-sm font-medium text-gray-700 mb-1"></label>
+        <input
+            type="text"
+            name=""
+            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="">
+        <p class="mt-1 text-xs text-gray-500"></p>
+    </div>
+</template>
+
+<template id="email-field-template">
+    <div>
+        <label for="" class="block text-sm font-medium text-gray-700 mb-1"></label>
+        <input
+            type="email"
+            name=""
+            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="">
+        <p class="mt-1 text-xs text-gray-500"></p>
+    </div>
+</template>
+
+<template id="textarea-field-template">
+    <div>
+        <label for="" class="block text-sm font-medium text-gray-700 mb-1"></label>
+        <textarea
+            name=""
+            rows="3"
+            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder=""></textarea>
+        <p class="mt-1 text-xs text-gray-500"></p>
+    </div>
+</template>
+
+<template id="select-field-template">
+    <div>
+        <label for="" class="block text-sm font-medium text-gray-700 mb-1"></label>
+        <select
+            name=""
+            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm">
+            <!-- Options will be populated by JavaScript -->
+        </select>
+        <p class="mt-1 text-xs text-gray-500"></p>
+    </div>
+</template>
+
+<template id="color-field-template">
+    <div>
+        <label for="" class="block text-sm font-medium text-gray-700 mb-1"></label>
+        <div class="flex items-center space-x-2">
+            <input
+                type="color"
+                name=""
+                class="h-10 w-16 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+            <input
+                type="text"
+                name=""
+                class="flex-1 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                placeholder="#000000">
+        </div>
+        <p class="mt-1 text-xs text-gray-500"></p>
+    </div>
+</template>
+
+<template id="number-field-template">
+    <div>
+        <label for="" class="block text-sm font-medium text-gray-700 mb-1"></label>
+        <input
+            type="number"
+            name=""
+            class="w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+            placeholder="">
+        <p class="mt-1 text-xs text-gray-500"></p>
+    </div>
+</template>
+
+<template id="checkbox-field-template">
+    <div class="flex items-center">
+        <input
+            type="checkbox"
+            name=""
+            class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+        <label for="" class="ml-2 block text-sm text-gray-900"></label>
+    </div>
+</template>

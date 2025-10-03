@@ -177,9 +177,9 @@ class EmailFetcher:
             # Check if this is an embedded image
             content_id = part.get('Content-ID', '').strip('<>')
             content_disposition = str(part.get("Content-Disposition", ""))
-            is_embedded = (content_id and
-                          (part.get_content_type().startswith('image/') or
-                           'inline' in content_disposition.lower()))
+            is_embedded = bool(content_id and
+                              (part.get_content_type().startswith('image/') or
+                               'inline' in content_disposition.lower()))
 
             # Create attachment record
             attachment = Attachment(

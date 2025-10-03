@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Respondr Support</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: white;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .widget-header {
+            background: #3B82F6;
+            color: white;
+            padding: 20px;
+            border-radius: 12px 12px 0 0;
+        }
+
+        .widget-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .widget-header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .widget-form {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #374151;
+        }
+
+        .form-group label.required::after {
+            content: ' *';
+            color: #EF4444;
+        }
+
+        .form-group input,
+        .form-group textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #D1D5DB;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+            transition: border-color 0.2s ease;
+        }
+
+        .form-group input:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: #3B82F6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .submit-button {
+            width: 100%;
+            background: #3B82F6;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            padding: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .submit-button:hover {
+            background: #2563EB;
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #6B7280;
+            font-size: 14px;
+        }
+
+        .success {
+            display: none;
+            text-align: center;
+            padding: 30px 20px;
+            color: #059669;
+        }
+
+        .success svg {
+            width: 48px;
+            height: 48px;
+            margin-bottom: 16px;
+            color: #10B981;
+        }
+
+        .error {
+            display: none;
+            background: #FEF2F2;
+            color: #DC2626;
+            padding: 12px;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 16px;
+        }
+
+        .spinner {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="widget-header">
+        <h3>Contact Support</h3>
+        <p>Hi! How can we help you today?</p>
+    </div>
+
+    <div class="widget-form">
+        <div class="error" id="error-message"></div>
+
+        <form id="support-form">
+            <div class="form-group">
+                <label for="name" class="required">Name</label>
+                <input type="text" id="name" name="name" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email" class="required">Email</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="subject" class="required">Subject</label>
+                <input type="text" id="subject" name="subject" required>
+            </div>
+
+            <div class="form-group">
+                <label for="message" class="required">Message</label>
+                <textarea id="message" name="message" required placeholder="How can we help you?"></textarea>
+            </div>
+
+            <button type="submit" class="submit-button">Send Message</button>
+        </form>
+
+        <div class="loading" id="loading">
+            <svg class="spinner" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <path d="m16 12-4-4-4 4"/>
+            </svg>
+            <br><br>
+            Sending your message...
+        </div>
+
+        <div class="success" id="success">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+                <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <h4 style="margin: 0 0 8px 0; font-size: 16px;">Message Sent!</h4>
+            <p style="margin: 0; font-size: 14px; color: #6B7280;">We'll get back to you as soon as possible.</p>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('support-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const data = {};
+            for (let [key, value] of formData.entries()) {
+                data[key] = value;
+            }
+
+            showLoading();
+            hideError();
+
+            fetch('{{ url_for("widget_submit") }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                if (result.success) {
+                    showSuccess();
+                    e.target.reset();
+                } else {
+                    throw new Error(result.message || 'Failed to send message');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showError(error.message || 'Failed to send message. Please try again.');
+                showForm();
+            });
+        });
+
+        function showLoading() {
+            document.getElementById('support-form').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+        }
+
+        function showForm() {
+            document.getElementById('support-form').style.display = 'block';
+            document.getElementById('loading').style.display = 'none';
+        }
+
+        function showSuccess() {
+            document.getElementById('support-form').style.display = 'none';
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('success').style.display = 'block';
+        }
+
+        function showError(message) {
+            const errorEl = document.getElementById('error-message');
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('error-message').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

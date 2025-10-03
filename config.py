@@ -8,7 +8,29 @@ class Config:
     SECRET_KEY = os.environ.get('FLASK_SECRET_KEY') or 'dev-secret-key-change-in-production'
 
     # Database settings
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///tickets.db'
+    database_uri = os.environ.get('DATABASE_URL') or 'sqlite:///instance/tickets.db'
+
+    # Add SQLite-specific settings to prevent locking issues
+    if database_uri.startswith('sqlite'):
+        # Add connection string parameters for better concurrency
+        database_uri = database_uri.replace('sqlite:///', 'sqlite:///') if 'sqlite:///' in database_uri else database_uri
+        # Check-same-thread=False allows SQLite to be used in multi-threaded environment
+        # Journal mode WAL (Write-Ahead Logging) improves concurrency
+        SQLALCHEMY_DATABASE_URI = f"{database_uri}?check_same_thread=False"
+        SQLALCHEMY_ENGINE_OPTIONS = {
+            'pool_size': 10,
+            'max_overflow': 20,
+            'pool_pre_ping': True,
+            'pool_recycle': 300,
+            'connect_args': {
+                'timeout': 15,
+                'check_same_thread': False,
+            }
+        }
+    else:
+        SQLALCHEMY_DATABASE_URI = database_uri
+        SQLALCHEMY_ENGINE_OPTIONS = {}
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     # Email settings
@@ -32,7 +54,8 @@ class Config:
     ATTACHMENT_STORAGE_PATH = os.environ.get('ATTACHMENT_STORAGE_PATH', 'storage/attachments')
 
     # Scheduler settings
-    SCHEDULER_ENABLED = os.environ.get('SCHEDULER_ENABLED', 'True').lower() == 'true'
+    # Set to False by default - use standalone scheduler.py for email sync
+    SCHEDULER_ENABLED = os.environ.get('SCHEDULER_ENABLED', 'False').lower() == 'true'
     SCHEDULER_API_ENABLED = True
 
     # Pagination
